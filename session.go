@@ -12,7 +12,7 @@ import (
 )
 
 type session struct {
-	workingDir  string
+	workingDir  	string
 	imports       []string
 	tmpCodes      []int
 	code          []string
@@ -88,6 +88,7 @@ func (s *session) removeTmpCodes() {
 	for _,t := range s.tmpCodes {
 		s.code[t] = ""
 	}
+	s.tmpCodes = s.tmpCodes[:0]
 }
 func getModuleNameOfCurrentProject(workingDirectory string) string {
 	bs, err := ioutil.ReadFile(workingDirectory + "/go.mod")
@@ -109,6 +110,7 @@ func newSession(workingDirectory string) (*session, error) {
 		panic(err)
 	}
 	session := &session{
+		workingDir:    "",
 		imports:       []string{},
 		tmpCodes:      []int{},
 		code:          []string{},
@@ -132,35 +134,45 @@ func (s *session) createModule(wd string, moduleName string) error {
 func (s *session) writeToFile() error {
 	return ioutil.WriteFile(s.sessionDir+"/main.go", []byte(s.validGoFileFromSession()), 500)
 }
+func (s *session) checkIfErrIsNotDecl(err string) bool {
+	return strings.Contains(err, "not used")
+}
+func (s *session) removeIfIsNotNotDecl(err string) {
+	if !s.checkIfErrIsNotDecl(err) {
+		s.code = s.code[:len(s.code)-1]
+	}
+}
+func (s *session) handleOutputCompile(output string, hasErr bool) {
+	if hasErr {
+		if s.checkIfErrIsNotDecl(output) {
+			s.removeIfIsNotNotDecl(output)
+			fmt.Println(">> Note you are not using something that you define or import")
+		} else {
+			fmt.Printf("Error:: %s\n", output)
+		}
+	} else {
+		fmt.Printf(">> %s\n", output)
+	}
+}
 
-func (s *session) run(stdOut, stdErr io.Writer) error {
+func (s *session) run(stdOut, stdErr io.Writer) {
 	err := os.Chdir(s.sessionDir)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	cmdImport := exec.Command("goimports", "-w", "main.go")
 	cmdImport.Stdout = s.outputDisplay
 	cmdImport.Stderr = s.errorDisplay
 	err = cmdImport.Run()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	cmdRun := exec.Command("go", "run", "main.go")
-	cmdRun.Stdout = s.outputDisplay
-	cmdRun.Stderr = s.errorDisplay
-	err = cmdRun.Run()
+	out, err := cmdRun.CombinedOutput()
 	if err != nil {
-		return err
+		fmt.Println("Compiler:: ", err.Error())
 	}
-	return nil
-}
-func (s *session) displayError(err error) error {
-	_, err = s.errorDisplay.Write([]byte(err.Error()+"\n"))
-	return err
-}
-func (s *session) displayOutput(output string) error {
-	_, err := s.errorDisplay.Write([]byte(output + "\n"))
-	return err
+	s.handleOutputCompile(string(out), err != nil)
 }
 
 func (s *session) validGoFileFromSession() string {

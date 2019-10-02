@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(ascii)
-	fmt.Printf("GoLobby Repl v%s", version)
+	fmt.Printf("GoLobby Repl v%s\n", version)
 	r := bufio.NewReader(os.Stdin)
 	for {
 		session.removeTmpCodes()
@@ -45,12 +45,9 @@ func main() {
 
 		err = session.writeToFile()
 		if err != nil {
-			session.displayError(err)
+			fmt.Printf("Err: %v\n",err)
 			continue
 		}
-		err = session.run(os.Stdout, os.Stdout)
-		if err != nil {
-			session.displayError(err)
-		}
+		session.run(os.Stdout, os.Stdout)
 	}
 }
