@@ -16,6 +16,7 @@ const (
 \____/\____/_____/\____/_.___/_.___/\__, /  /_/ |_/_____/_/   /_____/
                                    /____/                            
 `
+	version = "0.0.1"
 )
 func prompt() {
 	fmt.Print(fmt.Sprintf("%s > ", time.Now().Format("15:04:05")))
@@ -31,6 +32,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(ascii)
+	fmt.Printf("GoLobby Repl v%s", version)
 	r := bufio.NewReader(os.Stdin)
 	for {
 		session.removeTmpCodes()

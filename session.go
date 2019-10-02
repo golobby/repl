@@ -12,6 +12,7 @@ import (
 )
 
 type session struct {
+	workingDir  string
 	imports       []string
 	tmpCodes      []int
 	code          []string
@@ -20,6 +21,17 @@ type session struct {
 	outputDisplay io.Writer
 }
 
+const moduleTemplate = `module shell
+
+go 1.13
+
+%s
+`
+func createReplaceRequireClause(moduleName, localPath string) string {
+	return fmt.Sprintf(`replace %s => %s
+
+require %s latest`, moduleName, localPath, moduleName)
+}
 func isShellCommand(code string) bool {
 	return code[0] == ':'
 }
@@ -76,32 +88,47 @@ func (s *session) removeTmpCodes() {
 	for _,t := range s.tmpCodes {
 		s.code[t] = ""
 	}
-	for idx,c := range s.code{
-		if c == "" {
-			s.code = append(s.code[:idx] ,s.code[idx+1:]...)
-		}
-	}
 }
-
+func getModuleNameOfCurrentProject(workingDirectory string) string {
+	bs, err := ioutil.ReadFile(workingDirectory + "/go.mod")
+	fmt.Println(workingDirectory)
+	if err != nil{
+		panic(err)
+	}
+	gomod := string(bs)
+	moduleName := strings.Split(strings.Split(gomod, "\n")[0], " ")[1]
+	return moduleName
+}
 func newSession(workingDirectory string) (*session, error) {
 	sessionDir, err := createTmpDir(workingDirectory)
 	if err != nil {
 		return nil, err
 	}
-	return &session{
+	err = os.Chdir(sessionDir)
+	if err != nil {
+		panic(err)
+	}
+	session := &session{
 		imports:       []string{},
 		tmpCodes:      []int{},
 		code:          []string{},
 		sessionDir:    sessionDir,
 		errorDisplay:  os.Stdout,
 		outputDisplay: os.Stdout,
-	}, nil
+	}
+	if err = session.createModule(workingDirectory, getModuleNameOfCurrentProject(workingDirectory));err!=nil {
+		return nil, err
+	}
+	return session, nil
 }
 
 func (s *session) removeTmpDir() error {
 	return os.RemoveAll(s.sessionDir)
 }
 
+func (s *session) createModule(wd string, moduleName string) error {
+	return ioutil.WriteFile("go.mod", []byte(fmt.Sprintf(moduleTemplate, createReplaceRequireClause(moduleName, wd))), 500)
+}
 func (s *session) writeToFile() error {
 	return ioutil.WriteFile(s.sessionDir+"/main.go", []byte(s.validGoFileFromSession()), 500)
 }
