@@ -1,4 +1,4 @@
-module shell
+module github.com/golobby/repl
 
 go 1.13
 
