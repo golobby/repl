@@ -35,12 +35,22 @@ func isImport(im string) bool {
 	}
 	return matched
 }
+func isPrint(code string) bool {
+	matched, err := regexp.Match("fmt.Print.*", []byte(code))
+	if err != nil {
+		panic(err)
+	}
+	return matched
+}
 func (s *session) add(code string) {
 	if isShellCommand(code) {
 		s.addShellCommand(len(s.code) - 1)
 	} else if isImport(code) {
 		s.addImport(code)
-	} else {
+	} else if isPrint(code) {
+		s.code = append(s.code, code)
+		s.tmpCodes = append(s.tmpCodes, len(s.code) - 1)
+	}else {
 		s.addCode(code)
 	}
 }
@@ -60,6 +70,17 @@ func createTmpDir(workingDirectory string) (string, error) {
 		return sessionDir, err
 	}
 	return sessionDir, nil
+}
+
+func (s *session) removeTmpCodes() {
+	for _,t := range s.tmpCodes {
+		s.code[t] = ""
+	}
+	for idx,c := range s.code{
+		if c == "" {
+			s.code = append(s.code[:idx] ,s.code[idx+1:]...)
+		}
+	}
 }
 
 func newSession(workingDirectory string) (*session, error) {
@@ -107,11 +128,11 @@ func (s *session) run(stdOut, stdErr io.Writer) error {
 	return nil
 }
 func (s *session) displayError(err error) error {
-	_, err = s.errorDisplay.Write([]byte(err.Error()))
+	_, err = s.errorDisplay.Write([]byte(err.Error()+"\n"))
 	return err
 }
 func (s *session) displayOutput(output string) error {
-	_, err := s.errorDisplay.Write([]byte(output))
+	_, err := s.errorDisplay.Write([]byte(output + "\n"))
 	return err
 }
 

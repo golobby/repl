@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 const (
@@ -16,6 +17,9 @@ const (
                                    /____/                            
 `
 )
+func prompt() {
+	fmt.Print(fmt.Sprintf("%s > ", time.Now().Format("15:04:05")))
+}
 
 func main() {
 	wd, err := os.Getwd()
@@ -29,7 +33,8 @@ func main() {
 	fmt.Println(ascii)
 	r := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Print(">> ")
+		session.removeTmpCodes()
+		prompt()
 		code, err := r.ReadString(';')
 		if err != nil {
 			panic(err)
