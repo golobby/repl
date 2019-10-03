@@ -13,5 +13,4 @@ console will get directly to the go project and will be compiled instantly and y
 
 ## TODO
 ##### Multi-line input
-##### Evaluates any expressions, statements and function declarations
 ##### Code completion (with gocode)

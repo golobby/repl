@@ -47,7 +47,7 @@ func isImport(im string) bool {
 	return matched
 }
 func isPrint(code string) bool {
-	matched, err := regexp.Match("^fmt.Print.*", []byte(code))
+	matched, err := regexp.Match("^fmt.Print.*\\(.*\\)", []byte(code))
 	if err != nil {
 		panic(err)
 	}

@@ -50,7 +50,7 @@ func (s *session) addImport(im string) {
 }
 
 func wrapInPrint(code string) string {
-	return fmt.Sprintf(`fmt.Printf("%%+v\n", %s)`, code)
+	return fmt.Sprintf(`fmt.Printf("<%%T - %%+v>\n", %s, %s)`, code, code)
 }
 
 func (s *session) add(code string) {
