@@ -34,7 +34,7 @@ func handler(c string) {
 		fmt.Printf("Err: %v\n",err)
 		return
 	}
-	fmt.Println(currentSession.run())
+	fmt.Print(currentSession.run())
 }
 
 func main() {

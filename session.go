@@ -155,7 +155,7 @@ func (s *session) run() string {
 			s.removeIfIsNotNotDecl(string(out))
 			return "Note you are not using something that you define or import"
 		} else {
-			return fmt.Sprintf("Error:: %s\n", string(out))
+			return fmt.Sprintf("Error:: %s", string(out))
 		}
 	}
 	return fmt.Sprintf(">> %s", out)
