@@ -21,6 +21,12 @@ type session struct {
 	Writer io.Writer
 }
 
+func isExpr(code string) bool {
+	if strings.Contains(code, "=") {
+		return false
+	}
+	return true
+}
 func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
 	match := r.FindStringSubmatch(str)
 	subMatchMap := make(map[string]string)
@@ -39,53 +45,12 @@ go 1.13
 
 %s
 `
-
-func createReplaceRequireClause(moduleName, localPath string) string {
-	return fmt.Sprintf(`replace %s => %s
-
-require %s latest`, moduleName, localPath, moduleName)
-}
-
-func isShellCommand(code string) bool {
-	if len(code) == 0 {
-		return false
-	}
-	return code[0] == ':'
-}
-
 func (s *session) addImport(im string) {
 	s.imports = append(s.imports, im)
 }
 
-func isTypeDecl(code string) bool {
-	matched, err := regexp.Match("type .+", []byte(code))
-	if err != nil {
-		return false
-	}
-	return matched
-}
-func isFunc(code string) bool {
-	matched, err := regexp.Match("^func.+", []byte(code))
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	fmt.Println(matched)
-	return matched
-}
-func isImport(im string) bool {
-	matched, err := regexp.Match("import .+", []byte(im))
-	if err != nil {
-		panic(err)
-	}
-	return matched
-}
-func isPrint(code string) bool {
-	matched, err := regexp.Match("fmt.Print.*", []byte(code))
-	if err != nil {
-		panic(err)
-	}
-	return matched
+func wrapInPrint(code string) string {
+	return fmt.Sprintf(`fmt.Printf("%%+v\n", %s)`, code)
 }
 
 func (s *session) add(code string) {
@@ -98,7 +63,11 @@ func (s *session) add(code string) {
 	} else if isPrint(code) {
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code) - 1)
-	}  else {
+	} else {
+		if isExpr(code) {
+			s.add(wrapInPrint(code))
+			return
+		}
 		s.addCode(code)
 	}
 }
@@ -126,18 +95,8 @@ func (s *session) removeTmpCodes() {
 	}
 	s.tmpCodes = s.tmpCodes[:0]
 }
-func getModuleNameOfCurrentProject(workingDirectory string) string {
-	bs, err := ioutil.ReadFile(workingDirectory + "/go.mod")
-	if err != nil{
-		panic(err)
-	}
-	gomod := string(bs)
-	moduleName := strings.Split(strings.Split(gomod, "\n")[0], " ")[1]
-	return moduleName
-}
-func goGet() error {
-	return exec.Command("go", "get", "-u", "./...").Run()
-}
+
+
 func newSession(workingDirectory string) (*session, error) {
 	sessionDir, err := createTmpDir(workingDirectory)
 	if err != nil {
@@ -154,7 +113,8 @@ func newSession(workingDirectory string) (*session, error) {
 		code:       []string{},
 		sessionDir: sessionDir,
 	}
-	if err = session.createModule(workingDirectory, getModuleNameOfCurrentProject(workingDirectory));err!=nil {
+	currentModule := getModuleNameOfCurrentProject(workingDirectory)
+	if err = session.createModule(workingDirectory, currentModule);err!=nil {
 		return nil, err
 	}
 	err = goGet()
