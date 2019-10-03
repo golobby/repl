@@ -46,7 +46,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	p := prompt.New(handler, completer, prompt.OptionPrefix(">>> "))
+	p := prompt.New(handler, completer, prompt.OptionPrefix("repl> "))
 	fmt.Println(ascii)
 	fmt.Printf("GoLobby Repl v%s\n", version)
 	p.Run()

@@ -14,10 +14,23 @@ import (
 type session struct {
 	workingDir  	string
 	imports       []string
+	typesAndMethods []string
 	tmpCodes      []int
 	code          []string
 	sessionDir    string
 	Writer io.Writer
+}
+
+func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
+	match := r.FindStringSubmatch(str)
+	subMatchMap := make(map[string]string)
+	for i, name := range r.SubexpNames() {
+		if i != 0 {
+			subMatchMap[name] = match[i]
+		}
+	}
+
+	return subMatchMap
 }
 
 const moduleTemplate = `module shell
@@ -26,6 +39,7 @@ go 1.13
 
 %s
 `
+
 func createReplaceRequireClause(moduleName, localPath string) string {
 	return fmt.Sprintf(`replace %s => %s
 
@@ -43,6 +57,22 @@ func (s *session) addImport(im string) {
 	s.imports = append(s.imports, im)
 }
 
+func isTypeDecl(code string) bool {
+	matched, err := regexp.Match("type .+", []byte(code))
+	if err != nil {
+		return false
+	}
+	return matched
+}
+func isFunc(code string) bool {
+	matched, err := regexp.Match("^func.+", []byte(code))
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	fmt.Println(matched)
+	return matched
+}
 func isImport(im string) bool {
 	matched, err := regexp.Match("import .+", []byte(im))
 	if err != nil {
@@ -57,15 +87,18 @@ func isPrint(code string) bool {
 	}
 	return matched
 }
+
 func (s *session) add(code string) {
 	if isShellCommand(code) {
 		s.addShellCommand(len(s.code) - 1)
 	} else if isImport(code) {
 		s.addImport(code)
+	} else if isFunc(code) || isTypeDecl(code) {
+		s.typesAndMethods = append(s.typesAndMethods, code)
 	} else if isPrint(code) {
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code) - 1)
-	}else {
+	}  else {
 		s.addCode(code)
 	}
 }
@@ -174,6 +207,6 @@ func (s *session) run() string {
 }
 
 func (s *session) validGoFileFromSession() string {
-	code := "package main\n%s\nfunc main() {\n%s\n}"
-	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.code, "\n"))
+	code := "package main\n%s\n%s\nfunc main() {\n%s\n}"
+	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.typesAndMethods, "\n"), strings.Join(s.code, "\n"))
 }
