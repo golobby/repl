@@ -13,9 +13,7 @@ func createReplaceRequireClause(moduleName, localPath string) string {
 	if moduleName == "" {
 		return ""
 	}
-	return fmt.Sprintf(`replace %s => %s
-
-require %s latest`, moduleName, localPath, moduleName)
+	return fmt.Sprintf(`replace %s => %s`, moduleName, localPath)
 }
 
 func isShellCommand(code string) bool {
