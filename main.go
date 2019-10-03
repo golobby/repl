@@ -34,7 +34,7 @@ func handler(c string) {
 		fmt.Printf("Err: %v\n",err)
 		return
 	}
-	fmt.Print(currentSession.run())
+	fmt.Println(currentSession.run())
 }
 
 func main() {
@@ -46,7 +46,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	p := prompt.New(handler, completer, prompt.OptionPrefix("> "))
+	p := prompt.New(handler, completer, prompt.OptionPrefix(">>> "))
 	fmt.Println(ascii)
 	fmt.Printf("GoLobby Repl v%s\n", version)
 	p.Run()

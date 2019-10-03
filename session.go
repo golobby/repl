@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,6 +17,7 @@ type session struct {
 	tmpCodes      []int
 	code          []string
 	sessionDir    string
+	Writer io.Writer
 }
 
 const moduleTemplate = `module shell
@@ -29,7 +31,11 @@ func createReplaceRequireClause(moduleName, localPath string) string {
 
 require %s latest`, moduleName, localPath, moduleName)
 }
+
 func isShellCommand(code string) bool {
+	if len(code) == 0 {
+		return false
+	}
 	return code[0] == ':'
 }
 
@@ -89,13 +95,15 @@ func (s *session) removeTmpCodes() {
 }
 func getModuleNameOfCurrentProject(workingDirectory string) string {
 	bs, err := ioutil.ReadFile(workingDirectory + "/go.mod")
-	fmt.Println(workingDirectory)
 	if err != nil{
 		panic(err)
 	}
 	gomod := string(bs)
 	moduleName := strings.Split(strings.Split(gomod, "\n")[0], " ")[1]
 	return moduleName
+}
+func goGet() error {
+	return exec.Command("go", "get", "-u", "./...").Run()
 }
 func newSession(workingDirectory string) (*session, error) {
 	sessionDir, err := createTmpDir(workingDirectory)
@@ -107,13 +115,17 @@ func newSession(workingDirectory string) (*session, error) {
 		panic(err)
 	}
 	session := &session{
-		workingDir:    "",
-		imports:       []string{},
-		tmpCodes:      []int{},
-		code:          []string{},
-		sessionDir:    sessionDir,
+		workingDir: "",
+		imports:    []string{},
+		tmpCodes:   []int{},
+		code:       []string{},
+		sessionDir: sessionDir,
 	}
 	if err = session.createModule(workingDirectory, getModuleNameOfCurrentProject(workingDirectory));err!=nil {
+		return nil, err
+	}
+	err = goGet()
+	if err != nil {
 		return nil, err
 	}
 	return session, nil
@@ -158,7 +170,7 @@ func (s *session) run() string {
 			return fmt.Sprintf("Error:: %s", string(out))
 		}
 	}
-	return fmt.Sprintf(">> %s", out)
+	return fmt.Sprintf("%s", out)
 }
 
 func (s *session) validGoFileFromSession() string {
