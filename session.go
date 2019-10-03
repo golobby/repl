@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,8 +16,6 @@ type session struct {
 	tmpCodes      []int
 	code          []string
 	sessionDir    string
-	errorDisplay  io.Writer
-	outputDisplay io.Writer
 }
 
 const moduleTemplate = `module shell
@@ -115,8 +112,6 @@ func newSession(workingDirectory string) (*session, error) {
 		tmpCodes:      []int{},
 		code:          []string{},
 		sessionDir:    sessionDir,
-		errorDisplay:  os.Stdout,
-		outputDisplay: os.Stdout,
 	}
 	if err = session.createModule(workingDirectory, getModuleNameOfCurrentProject(workingDirectory));err!=nil {
 		return nil, err
@@ -142,37 +137,28 @@ func (s *session) removeIfIsNotNotDecl(err string) {
 		s.code = s.code[:len(s.code)-1]
 	}
 }
-func (s *session) handleOutputCompile(output string, hasErr bool) {
-	if hasErr {
-		if s.checkIfErrIsNotDecl(output) {
-			s.removeIfIsNotNotDecl(output)
-			fmt.Println(">> Note you are not using something that you define or import")
-		} else {
-			fmt.Printf("Error:: %s\n", output)
-		}
-	} else {
-		fmt.Printf(">> %s\n", output)
-	}
-}
 
-func (s *session) run(stdOut, stdErr io.Writer) {
+func (s *session) run() string {
 	err := os.Chdir(s.sessionDir)
 	if err != nil {
 		panic(err)
 	}
 	cmdImport := exec.Command("goimports", "-w", "main.go")
-	cmdImport.Stdout = s.outputDisplay
-	cmdImport.Stderr = s.errorDisplay
 	err = cmdImport.Run()
 	if err != nil {
-		panic(err)
+		return err.Error()
 	}
 	cmdRun := exec.Command("go", "run", "main.go")
 	out, err := cmdRun.CombinedOutput()
 	if err != nil {
-		fmt.Println("Compiler:: ", err.Error())
+		if s.checkIfErrIsNotDecl(string(out)) {
+			s.removeIfIsNotNotDecl(string(out))
+			return "Note you are not using something that you define or import"
+		} else {
+			return fmt.Sprintf("Error:: %s\n", string(out))
+		}
 	}
-	s.handleOutputCompile(string(out), err != nil)
+	return fmt.Sprintf(">> %s", out)
 }
 
 func (s *session) validGoFileFromSession() string {

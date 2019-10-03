@@ -1,10 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"time"
+
+	"github.com/c-bata/go-prompt"
+)
+var	(
+	currentSession *session
+
 )
 
 const (
@@ -18,8 +22,19 @@ const (
 `
 	version = "0.0.1"
 )
-func prompt() {
-	fmt.Print(fmt.Sprintf("%s > ", time.Now().Format("15:04:05")))
+func completer(d prompt.Document) []prompt.Suggest {
+	s := []prompt.Suggest{}
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+}
+func handler(c string) {
+	currentSession.removeTmpCodes()
+	currentSession.add(c)
+	err := currentSession.writeToFile()
+	if err != nil {
+		fmt.Printf("Err: %v\n",err)
+		return
+	}
+	fmt.Println(currentSession.run())
 }
 
 func main() {
@@ -27,27 +42,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	session, err := newSession(wd)
+	currentSession, err = newSession(wd)
 	if err != nil {
 		panic(err)
 	}
+	p := prompt.New(handler, completer, prompt.OptionPrefix("> "))
 	fmt.Println(ascii)
 	fmt.Printf("GoLobby Repl v%s\n", version)
-	r := bufio.NewReader(os.Stdin)
-	for {
-		session.removeTmpCodes()
-		prompt()
-		code, err := r.ReadString(';')
-		if err != nil {
-			panic(err)
-		}
-		session.add(code)
-
-		err = session.writeToFile()
-		if err != nil {
-			fmt.Printf("Err: %v\n",err)
-			continue
-		}
-		session.run(os.Stdout, os.Stdout)
-	}
+	p.Run()
 }
