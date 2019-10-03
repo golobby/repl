@@ -21,8 +21,15 @@ type session struct {
 	Writer io.Writer
 }
 
+func isFunctionCall(code string) bool {
+	m, err := regexp.Match("^.+\\(.*\\)", []byte(code))
+	if err != nil {
+		return false
+	}
+	return m
+}
 func isExpr(code string) bool {
-	if strings.Contains(code, "=") {
+	if strings.Contains(code, "=") || strings.Contains(code, "var") || isFunctionCall(code){
 		return false
 	}
 	return true
