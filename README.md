@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/golobby/repl.svg?branch=master)](https://travis-ci.org/golobby/repl)
+[![Coverage State](https://coveralls.io/repos/github/golobby/repl/badge.svg?branch=master)](https://coveralls.io/github/golobby/repl)
 # REPL
 ## Why
 REPL stands for READ-EVAL-PRINT-LOOP. In scripting languages like PHP or Python there is an environment called REPL, which is 
