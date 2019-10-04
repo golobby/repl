@@ -12,5 +12,4 @@ golobby/repl basically creates a new golang project and gives a direct interface
 console will get directly to the go project and will be compiled instantly and you will see the result.
 
 ## TODO
-##### Multi-line input
 ##### Code completion (with gocode)
