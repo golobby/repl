@@ -38,6 +38,31 @@ func isTypeDecl(code string) bool {
 	}
 	return matched
 }
+func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
+	match := r.FindStringSubmatch(str)
+	subMatchMap := make(map[string]string)
+	for i, name := range r.SubexpNames() {
+		if i != 0 {
+			subMatchMap[name] = match[i]
+		}
+	}
+
+	return subMatchMap
+}
+func isFunctionCall(code string) bool {
+	m, err := regexp.Match("^.+\\(.*\\)", []byte(code))
+	if err != nil {
+		return false
+	}
+	return m
+}
+
+func isExpr(code string) bool {
+	if strings.Contains(code, "=") || strings.Contains(code, "var") || isFunctionCall(code) {
+		return false
+	}
+	return true
+}
 func isFunc(code string) bool {
 	matched, err := regexp.Match("^func.+", []byte(code))
 	if err != nil {

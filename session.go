@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -40,6 +39,9 @@ func (s *session) shouldContinue(code string) bool {
 		if c == '}' || c == ')' {
 			idx := strings.Index(stillOpenChars, mapChars[string(c)])
 			if idx >= 0 {
+				if len(stillOpenChars) == 0 {
+					return false
+				}
 				stillOpenChars = stillOpenChars[:idx] + stillOpenChars[idx+1:]
 			}
 		}
@@ -49,31 +51,6 @@ func (s *session) shouldContinue(code string) bool {
 		return true
 	}
 	return false
-}
-
-func isFunctionCall(code string) bool {
-	m, err := regexp.Match("^.+\\(.*\\)", []byte(code))
-	if err != nil {
-		return false
-	}
-	return m
-}
-func isExpr(code string) bool {
-	if strings.Contains(code, "=") || strings.Contains(code, "var") || isFunctionCall(code) {
-		return false
-	}
-	return true
-}
-func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
-	match := r.FindStringSubmatch(str)
-	subMatchMap := make(map[string]string)
-	for i, name := range r.SubexpNames() {
-		if i != 0 {
-			subMatchMap[name] = match[i]
-		}
-	}
-
-	return subMatchMap
 }
 
 const moduleTemplate = `module shell
@@ -96,6 +73,10 @@ func (s *session) add(code string) {
 		s.code[len(s.code)-1] += "\n" + code
 		if !s.shouldContinue(s.code[len(s.code)-1]) {
 			s.continueMode = false
+			code = s.code[len(s.code)-1]
+			s.code = s.code[:len(s.code)-1]
+			s.add(code)
+			return
 		}
 		return
 	}
