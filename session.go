@@ -48,6 +48,9 @@ func (s *session) shouldContinue(code string) bool {
 		if c == '}' || c == ')' {
 			idx := strings.Index(s.stillOpenChars, mapChars[string(c)])
 			if idx >= 0 {
+				if len(s.stillOpenChars) == 0 {
+					return false
+				}
 				s.stillOpenChars = s.stillOpenChars[:idx] + s.stillOpenChars[idx+1:]
 			}
 		}
@@ -146,6 +149,9 @@ func createTmpDir(workingDirectory string) (string, error) {
 	}
 	return sessionDir, nil
 }
+func goCompilerPretifyOutput(output string) string {
+	return ""
+}
 
 func (s *session) removeTmpCodes() {
 	for _, t := range s.tmpCodes {
@@ -206,9 +212,9 @@ func (s *session) run() string {
 		panic(err)
 	}
 	cmdImport := exec.Command("goimports", "-w", "main.go")
-	err = cmdImport.Run()
+	out1, err := cmdImport.CombinedOutput()
 	if err != nil {
-		return err.Error()
+		return fmt.Sprintf("%s", out1)
 	}
 	cmdRun := exec.Command("go", "run", "main.go")
 	out, err := cmdRun.CombinedOutput()
