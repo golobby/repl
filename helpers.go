@@ -15,7 +15,15 @@ func createReplaceRequireClause(moduleName, localPath string) string {
 	}
 	return fmt.Sprintf(`replace %s => %s`, moduleName, localPath)
 }
-
+func multiplyString(s string, n int) string {
+	if n == 0 {
+		return ""
+	}
+	for i := 1; i < n; i++ {
+		s += s
+	}
+	return s
+}
 func isShellCommand(code string) bool {
 	if len(code) == 0 {
 		return false
@@ -45,18 +53,22 @@ func isImport(im string) bool {
 	return matched
 }
 func isPrint(code string) bool {
-	matched, err := regexp.Match("^fmt.Print.*\\(.*\\)", []byte(code))
+	matched1, err := regexp.Match("^fmt.Print.*\\(.*\\)", []byte(code))
 	if err != nil {
 		panic(err)
 	}
-	return matched
+	matched2, err := regexp.Match("^print(ln|f).*", []byte(code))
+	if err != nil {
+		panic(err)
+	}
+	return matched1 || matched2
 }
 func goGet() error {
 	return exec.Command("go", "get", "-u", "./...").Run()
 }
 func getModuleNameOfCurrentProject(workingDirectory string) string {
 	bs, err := ioutil.ReadFile(workingDirectory + "/go.mod")
-	if err != nil{
+	if err != nil {
 		if os.IsNotExist(err) {
 			return ""
 		}

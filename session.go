@@ -26,36 +26,26 @@ type session struct {
 	code            []string
 	sessionDir      string
 	Writer          io.Writer
-	stillOpenChars  string
 	continueMode    bool
+	indents         int
 }
 
-func multiplyString(s string, n int) string {
-	if n == 0 {
-		return ""
-	}
-	for i := 1; i < n; i++ {
-		s += s
-	}
-	return s
-}
 func (s *session) shouldContinue(code string) bool {
+	var stillOpenChars string
 	for _, c := range code {
 		if c == '{' || c == '(' {
-			s.stillOpenChars += string(c)
+			stillOpenChars += string(c)
 			continue
 		}
 		if c == '}' || c == ')' {
-			idx := strings.Index(s.stillOpenChars, mapChars[string(c)])
+			idx := strings.Index(stillOpenChars, mapChars[string(c)])
 			if idx >= 0 {
-				if len(s.stillOpenChars) == 0 {
-					return false
-				}
-				s.stillOpenChars = s.stillOpenChars[:idx] + s.stillOpenChars[idx+1:]
+				stillOpenChars = stillOpenChars[:idx] + stillOpenChars[idx+1:]
 			}
 		}
 	}
-	if len(s.stillOpenChars) > 0 {
+	if len(stillOpenChars) > 0 {
+		s.indents = len(stillOpenChars)
 		return true
 	}
 	return false
@@ -103,8 +93,7 @@ func wrapInPrint(code string) string {
 
 func (s *session) add(code string) {
 	if s.continueMode {
-		s.stillOpenChars = s.stillOpenChars[:len(s.stillOpenChars)-1]
-		s.code[len(s.code)-1] += code
+		s.code[len(s.code)-1] += "\n" + code
 		if !s.shouldContinue(s.code[len(s.code)-1]) {
 			s.continueMode = false
 		}

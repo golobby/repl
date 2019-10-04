@@ -37,7 +37,7 @@ func handler(c string) {
 		return
 	}
 	if currentSession.continueMode {
-		fmt.Print(multiplyString("...", len(currentSession.stillOpenChars)))
+		fmt.Print(multiplyString("...", currentSession.indents))
 		return
 	}
 	fmt.Println(currentSession.run())
