@@ -11,14 +11,51 @@ import (
 	"time"
 )
 
+var (
+	mapChars = map[string]string{
+		"(": ")",
+		"{": "}",
+	}
+)
+
 type session struct {
-	workingDir  	string
-	imports       []string
+	workingDir      string
+	imports         []string
 	typesAndMethods []string
-	tmpCodes      []int
-	code          []string
-	sessionDir    string
-	Writer io.Writer
+	tmpCodes        []int
+	code            []string
+	sessionDir      string
+	Writer          io.Writer
+	stillOpenChars  string
+	continueMode    bool
+}
+
+func multiplyString(s string, n int) string {
+	if n == 0 {
+		return ""
+	}
+	for i := 1; i < n; i++ {
+		s += s
+	}
+	return s
+}
+func (s *session) shouldContinue(code string) bool {
+	for _, c := range code {
+		if c == '{' || c == '(' {
+			s.stillOpenChars += string(c)
+			continue
+		}
+		if c == '}' || c == ')' {
+			idx := strings.Index(s.stillOpenChars, mapChars[string(c)])
+			if idx >= 0 {
+				s.stillOpenChars = s.stillOpenChars[:idx] + s.stillOpenChars[idx+1:]
+			}
+		}
+	}
+	if len(s.stillOpenChars) > 0 {
+		return true
+	}
+	return false
 }
 
 func isFunctionCall(code string) bool {
@@ -29,7 +66,7 @@ func isFunctionCall(code string) bool {
 	return m
 }
 func isExpr(code string) bool {
-	if strings.Contains(code, "=") || strings.Contains(code, "var") || isFunctionCall(code){
+	if strings.Contains(code, "=") || strings.Contains(code, "var") || isFunctionCall(code) {
 		return false
 	}
 	return true
@@ -52,6 +89,7 @@ go 1.13
 
 %s
 `
+
 func (s *session) addImport(im string) {
 	s.imports = append(s.imports, im)
 }
@@ -61,6 +99,19 @@ func wrapInPrint(code string) string {
 }
 
 func (s *session) add(code string) {
+	if s.continueMode {
+		s.stillOpenChars = s.stillOpenChars[:len(s.stillOpenChars)-1]
+		s.code[len(s.code)-1] += code
+		if !s.shouldContinue(s.code[len(s.code)-1]) {
+			s.continueMode = false
+		}
+		return
+	}
+	if s.shouldContinue(code) {
+		s.continueMode = true
+		s.code = append(s.code, code)
+		return
+	}
 	if isShellCommand(code) {
 		s.addShellCommand(len(s.code) - 1)
 	} else if isImport(code) {
@@ -69,7 +120,7 @@ func (s *session) add(code string) {
 		s.typesAndMethods = append(s.typesAndMethods, code)
 	} else if isPrint(code) {
 		s.code = append(s.code, code)
-		s.tmpCodes = append(s.tmpCodes, len(s.code) - 1)
+		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
 	} else {
 		if isExpr(code) {
 			s.add(wrapInPrint(code))
@@ -97,12 +148,11 @@ func createTmpDir(workingDirectory string) (string, error) {
 }
 
 func (s *session) removeTmpCodes() {
-	for _,t := range s.tmpCodes {
+	for _, t := range s.tmpCodes {
 		s.code[t] = ""
 	}
 	s.tmpCodes = s.tmpCodes[:0]
 }
-
 
 func newSession(workingDirectory string) (*session, error) {
 	sessionDir, err := createTmpDir(workingDirectory)
@@ -121,7 +171,7 @@ func newSession(workingDirectory string) (*session, error) {
 		sessionDir: sessionDir,
 	}
 	currentModule := getModuleNameOfCurrentProject(workingDirectory)
-	if err = session.createModule(workingDirectory, currentModule);err!=nil {
+	if err = session.createModule(workingDirectory, currentModule); err != nil {
 		return nil, err
 	}
 	err = goGet()

@@ -6,9 +6,9 @@ import (
 
 	"github.com/c-bata/go-prompt"
 )
-var	(
-	currentSession *session
 
+var (
+	currentSession *session
 )
 
 const (
@@ -22,16 +22,22 @@ const (
 `
 	version = "0.0.1"
 )
+
 func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
+
 func handler(c string) {
 	currentSession.removeTmpCodes()
 	currentSession.add(c)
 	err := currentSession.writeToFile()
 	if err != nil {
-		fmt.Printf("Err: %v\n",err)
+		fmt.Printf("Err: %v\n", err)
+		return
+	}
+	if currentSession.continueMode {
+		fmt.Print(multiplyString("...", len(currentSession.stillOpenChars)))
 		return
 	}
 	fmt.Println(currentSession.run())
