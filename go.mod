@@ -3,6 +3,7 @@ module github.com/golobby/repl
 go 1.13
 
 require (
+	bou.ke/monkey v1.0.1
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/golobby/container v1.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect

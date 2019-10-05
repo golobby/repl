@@ -1,9 +1,12 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
 	"regexp"
 	"testing"
 
+	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,4 +90,47 @@ func Test_wrapInPrint(t *testing.T) {
 	assert.Equal(t, `fmt.Printf("<%T> %+v\n", 1+2, 1+2)`, wrapInPrint("1+2"))
 	assert.Equal(t, `fmt.Printf("<%T> %+v\n", "Hello", "Hello")`, wrapInPrint(`"Hello"`))
 
+}
+func Test_multiplyString(t *testing.T) {
+	assert.Equal(t, "", multiplyString("...", 0))
+	assert.Equal(t, "...", multiplyString("...", 1))
+	assert.Equal(t, "......", multiplyString("...", 2))
+	assert.Equal(t, ".........", multiplyString("...", 3))
+
+}
+func Test_getModuleNameOfCurrentProject_in_go_project(t *testing.T) {
+	monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return []byte(`module somemodule
+go 1.13`), nil
+	})
+	moduleName := getModuleNameOfCurrentProject("somedir")
+	assert.Equal(t, moduleName, "somemodule")
+	monkey.Unpatch(ioutil.ReadFile)
+}
+
+func Test_getModuleNameOfCurrentProject_not_in_go_project(t *testing.T) {
+	monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return nil, os.ErrNotExist
+	})
+	moduleName := getModuleNameOfCurrentProject("somedir")
+	assert.Equal(t, moduleName, "")
+	monkey.Unpatch(ioutil.ReadFile)
+}
+
+func Test_isExpr(t *testing.T) {
+	assert.True(t, isExpr("1+2"))
+	assert.True(t, isExpr(`"Hello World"`))
+	assert.False(t, isExpr("var x int"))
+	assert.False(t, isExpr("x:=2"))
+}
+func Test_isComment(t *testing.T) {
+	assert.True(t, isComment("// salam"))
+	assert.True(t, isComment("/* salam */"))
+	assert.True(t, isComment(`//fmt.Println("Hello")`))
+	assert.False(t, isComment(`fmt.Println("Hello")`))
+}
+func Test_checkIfErrIsNotDecl(t *testing.T) {
+	assert.True(t, checkIfErrIsNotDecl(`"fmt" imported and not used`))
+	assert.True(t, checkIfErrIsNotDecl(`a declared and not used`))
+	assert.False(t, checkIfErrIsNotDecl("not able to compile"))
 }

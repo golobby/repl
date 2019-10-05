@@ -18,7 +18,6 @@ var (
 )
 
 type session struct {
-	workingDir      string
 	imports         []string
 	typesAndMethods []string
 	tmpCodes        []int
@@ -83,9 +82,7 @@ func (s *session) add(code string) {
 		return
 	}
 
-	if isShellCommand(code) {
-		s.addShellCommand(len(s.code) - 1)
-	} else if isImport(code) {
+	if isImport(code) {
 		s.addImport(code)
 	} else if isFunc(code) || isTypeDecl(code) {
 		s.typesAndMethods = append(s.typesAndMethods, code)
@@ -105,12 +102,7 @@ func (s *session) add(code string) {
 func (s *session) addCode(code string) {
 	s.code = append(s.code, code)
 }
-func (s *session) cleanCurrentShellCommands() {
-	_ = s.tmpCodes[:0]
-}
-func (s *session) addShellCommand(index int) {
-	s.tmpCodes = append(s.tmpCodes, index)
-}
+
 func createTmpDir(workingDirectory string) (string, error) {
 	sessionDir := workingDirectory + "/.goshell/sessions/" + fmt.Sprint(time.Now().Nanosecond())
 	err := os.MkdirAll(sessionDir, 500)
@@ -118,9 +110,6 @@ func createTmpDir(workingDirectory string) (string, error) {
 		return sessionDir, err
 	}
 	return sessionDir, nil
-}
-func goCompilerPretifyOutput(output string) string {
-	return ""
 }
 
 func (s *session) removeTmpCodes() {
@@ -140,7 +129,6 @@ func newSession(workingDirectory string) (*session, error) {
 		panic(err)
 	}
 	session := &session{
-		workingDir: "",
 		imports:    []string{},
 		tmpCodes:   []int{},
 		code:       []string{},
@@ -167,13 +155,9 @@ func (s *session) createModule(wd string, moduleName string) error {
 func (s *session) writeToFile() error {
 	return ioutil.WriteFile(s.sessionDir+"/main.go", []byte(s.validGoFileFromSession()), 500)
 }
-func (s *session) checkIfErrIsNotDecl(err string) bool {
-	return strings.Contains(err, "not used")
-}
-func (s *session) removeIfIsNotNotDecl(err string) {
-	if !s.checkIfErrIsNotDecl(err) {
-		s.code = s.code[:len(s.code)-1]
-	}
+
+func (s *session) removeLastCode() {
+	s.code = s.code[:len(s.code)-1]
 }
 
 func (s *session) run() string {
@@ -189,8 +173,8 @@ func (s *session) run() string {
 	cmdRun := exec.Command("go", "run", "main.go")
 	out, err := cmdRun.CombinedOutput()
 	if err != nil {
-		if s.checkIfErrIsNotDecl(string(out)) {
-			s.removeIfIsNotNotDecl(string(out))
+		if checkIfErrIsNotDecl(string(out)) {
+			s.removeLastCode()
 			return "Note you are not using something that you define or import"
 		} else {
 			return fmt.Sprintf("Error:: %s", string(out))

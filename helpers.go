@@ -22,13 +22,14 @@ func isComment(code string) bool {
 	return false
 }
 func multiplyString(s string, n int) string {
+	var out string
 	if n == 0 {
 		return ""
 	}
-	for i := 1; i < n; i++ {
-		s += s
+	for i := 0; i < n; i++ {
+		out += s
 	}
-	return s
+	return out
 }
 func isShellCommand(code string) bool {
 	if len(code) == 0 {
@@ -111,4 +112,8 @@ func getModuleNameOfCurrentProject(workingDirectory string) string {
 }
 func wrapInPrint(code string) string {
 	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
+}
+
+func checkIfErrIsNotDecl(err string) bool {
+	return strings.Contains(err, "not used")
 }
