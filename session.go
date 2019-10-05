@@ -65,7 +65,7 @@ func (s *session) addImport(im string) {
 }
 
 func wrapInPrint(code string) string {
-	return fmt.Sprintf(`fmt.Printf("<%%T - %%+v>\n", %s, %s)`, code, code)
+	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
 }
 
 func (s *session) add(code string) {
@@ -80,11 +80,13 @@ func (s *session) add(code string) {
 		}
 		return
 	}
+
 	if s.shouldContinue(code) {
 		s.continueMode = true
 		s.code = append(s.code, code)
 		return
 	}
+
 	if isShellCommand(code) {
 		s.addShellCommand(len(s.code) - 1)
 	} else if isImport(code) {

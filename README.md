@@ -12,7 +12,7 @@ golobby/repl basically creates a new golang project and gives a direct interface
 console will get directly to the go project and will be compiled instantly and you will see the result.
 
 ## Demo
-[![asciicast](https://asciinema.org/a/272622.svg)](https://asciinema.org/a/272622)
+[![asciicast](https://asciinema.org/a/272640.svg)](https://asciinema.org/a/272640)
 
 ## TODO
 ##### Code completion (with gocode)
