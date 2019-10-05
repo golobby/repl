@@ -12,6 +12,6 @@ golobby/repl basically creates a new golang project and gives a direct interface
 console will get directly to the go project and will be compiled instantly and you will see the result.
 
 ## Demo
-<script id="asciicast-c8MWOSJmRVEyYakWykISGTfDe" src="https://asciinema.org/a/c8MWOSJmRVEyYakWykISGTfDe.js" async></script>
+[![asciicast](https://asciinema.org/a/14.png)](https://asciinema.org/a/14)
 ## TODO
 ##### Code completion (with gocode)
