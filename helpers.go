@@ -15,6 +15,12 @@ func createReplaceRequireClause(moduleName, localPath string) string {
 	}
 	return fmt.Sprintf(`replace %s => %s`, moduleName, localPath)
 }
+func isComment(code string) bool {
+	if code[:2] == "//" || code[:2] == "/*" {
+		return true
+	}
+	return false
+}
 func multiplyString(s string, n int) string {
 	if n == 0 {
 		return ""

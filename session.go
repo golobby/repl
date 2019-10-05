@@ -96,6 +96,8 @@ func (s *session) add(code string) {
 	} else if isPrint(code) {
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
+	} else if isComment(code) {
+		s.code = append(s.code, code)
 	} else {
 		if isExpr(code) {
 			s.add(wrapInPrint(code))
