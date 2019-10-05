@@ -60,7 +60,7 @@ func isFunctionCall(code string) bool {
 	if err != nil {
 		return false
 	}
-	return m
+	return m && strings.ContainsAny(code, "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
 }
 
 func isExpr(code string) bool {
@@ -108,4 +108,7 @@ func getModuleNameOfCurrentProject(workingDirectory string) string {
 	gomod := string(bs)
 	moduleName := strings.Split(strings.Split(gomod, "\n")[0], " ")[1]
 	return moduleName
+}
+func wrapInPrint(code string) string {
+	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
 }

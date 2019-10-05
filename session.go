@@ -64,10 +64,6 @@ func (s *session) addImport(im string) {
 	s.imports = append(s.imports, im)
 }
 
-func wrapInPrint(code string) string {
-	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
-}
-
 func (s *session) add(code string) {
 	if s.continueMode {
 		s.code[len(s.code)-1] += "\n" + code
