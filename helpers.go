@@ -57,7 +57,7 @@ func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
 	return subMatchMap
 }
 func isFunctionCall(code string) bool {
-	m, err := regexp.Match("^.+\\(.*\\)", []byte(code))
+	m, err := regexp.Match("^[a-zA-Z0-9_.-]+\\(.*\\)", []byte(code))
 	if err != nil {
 		return false
 	}
