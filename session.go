@@ -12,8 +12,8 @@ import (
 
 var (
 	mapChars = map[string]string{
-		"(": ")",
-		"{": "}",
+		")": "(",
+		"}": "{",
 	}
 )
 
@@ -36,7 +36,7 @@ func (s *session) shouldContinue(code string) bool {
 			continue
 		}
 		if c == '}' || c == ')' {
-			idx := strings.Index(stillOpenChars, mapChars[string(c)])
+			idx := strings.LastIndex(stillOpenChars, mapChars[string(c)])
 			if idx >= 0 {
 				if len(stillOpenChars) == 0 {
 					return false
@@ -65,7 +65,7 @@ func (s *session) addImport(im string) {
 
 func (s *session) add(code string) {
 	if s.continueMode {
-		s.code[len(s.code)-1] += "\n" + code
+		s.code[len(s.code)-1] += code
 		if !s.shouldContinue(s.code[len(s.code)-1]) {
 			s.continueMode = false
 			code = s.code[len(s.code)-1]
