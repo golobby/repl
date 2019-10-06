@@ -75,13 +75,11 @@ func (s *session) add(code string) {
 		}
 		return
 	}
-
 	if s.shouldContinue(code) {
 		s.continueMode = true
 		s.code = append(s.code, code)
 		return
 	}
-
 	if isImport(code) {
 		s.addImport(code)
 	} else if isFunc(code) || isTypeDecl(code) {

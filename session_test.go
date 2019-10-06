@@ -76,4 +76,52 @@ func Test_shouldContinue(t *testing.T) {
 	code3 := "{fmt.Print("
 	assert.True(t, s.shouldContinue(code3))
 	assert.Equal(t, 2, s.indents)
+	code4 := "fmt.Println(22)"
+	s = &session{}
+	assert.False(t, s.shouldContinue(code4))
+	assert.Equal(t, 0, s.indents)
+}
+
+func Test_add_print(t *testing.T) {
+	s := &session{}
+	s.add(`fmt.Println("Salam")`)
+	assert.Equal(t, s.code, []string{`fmt.Println("Salam")`})
+	assert.Equal(t, s.tmpCodes, []int{0})
+}
+func Test_add_comment(t *testing.T) {
+	s := &session{}
+	s.add(`// this is a comment`)
+	assert.Equal(t, s.code, []string{`// this is a comment`})
+}
+
+func Test_add_type_decl(t *testing.T) {
+	s := &session{}
+	s.add(`type user struct{}`)
+	assert.Equal(t, s.typesAndMethods, []string{`type user struct{}`})
+}
+
+func Test_add_isImport(t *testing.T) {
+	s := &session{}
+	s.add(`import "github.com"`)
+	assert.Equal(t, s.imports, []string{`import "github.com"`})
+}
+func Test_add_function_call(t *testing.T) {
+	s := &session{}
+	s.add(`someFunc("salam man be to yare ghadimi")`)
+	assert.Equal(t, s.code, []string{`someFunc("salam man be to yare ghadimi")`})
+}
+func Test_add_expr(t *testing.T) {
+	s := &session{}
+	s.add(`fmt.Println`)
+	s.add(`"salam"`)
+	s.add(`23`)
+	s.add(`a*(2+3)`)
+	assert.Equal(t, s.code, []string{wrapInPrint(`fmt.Println`), wrapInPrint(`"salam"`), wrapInPrint(`23`), wrapInPrint(`a*(2+3)`)})
+}
+func Test_add_continue_mode(t *testing.T) {
+	s := &session{}
+	s.add("fmt.Println(")
+	s.add("2")
+	s.add(")")
+	assert.Equal(t, s.code, []string{"fmt.Println(2)"})
 }
