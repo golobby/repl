@@ -14,7 +14,6 @@ const (
 	StmtTypeComment
 	StmtTypeExpr
 	StmtTypeTypeDecl
-	StmtTypeVarDecl
 	StmtTypeFuncDecl
 	StmtUnknown
 	StmtEmpty
@@ -57,6 +56,9 @@ func ShouldContinue(code string) (int, bool) {
 func isEmpty(code string) bool {
 	return len(code) == 0
 }
+func hasOutput(code string) bool {
+	return strings.Contains(code, "=") && !strings.Contains(code, "==") && len(strings.Split(code, "=")) > 1
+}
 func isComment(code string) bool {
 	if len(code) < 2 {
 		return false
@@ -92,6 +94,13 @@ func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
 
 	return subMatchMap
 }
+func isVarDecl(code string) bool {
+	matched, err := regexp.Match(`(var)?\s*.+\s+:?=\s*[a-zA-Z0-9_.-]+\(.*\)`, []byte(code))
+	if err != nil {
+		return false
+	}
+	return matched
+}
 func isFunctionCall(code string) bool {
 	m, err := regexp.Match("^[a-zA-Z0-9_.-]+\\(.*\\)", []byte(code))
 	if err != nil {
@@ -101,7 +110,7 @@ func isFunctionCall(code string) bool {
 }
 
 func isExpr(code string) bool {
-	if (strings.Contains(code, "=") && !strings.Contains(code, "==")) || strings.Contains(code, "var") || isFunctionCall(code) {
+	if isVarDecl(code) || (isFunctionCall(code) && hasOutput(code)) {
 		return false
 	}
 	return true

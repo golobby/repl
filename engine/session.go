@@ -246,10 +246,10 @@ func (s *Session) Eval() string {
 	out, err := cmdRun.CombinedOutput()
 	if err != nil {
 		if checkIfErrIsNotDecl(string(out)) {
-			s.removeLastCode()
 			return "Note you are not using something that you define or import"
 		} else {
-			return fmt.Sprintf("Error:: %s", string(out))
+			s.removeLastCode()
+			return fmt.Sprintf("%s %s", string(out), err.Error())
 		}
 	}
 	return fmt.Sprintf("%s", out)
