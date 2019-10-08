@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	currentSession *engine.session
+	currentSession *engine.Session
 )
 
 const (
@@ -30,18 +30,11 @@ func completer(d prompt.Document) []prompt.Suggest {
 }
 
 func handler(c string) {
-	currentSession.removeTmpCodes()
-	currentSession.add(c)
-	err := currentSession.writeToFile()
+	err := currentSession.Add(c)
 	if err != nil {
-		fmt.Printf("Err: %v\n", err)
-		return
+		panic(err)
 	}
-	if currentSession.continueMode {
-		fmt.Print(engine.multiplyString("...", currentSession.indents))
-		return
-	}
-	fmt.Println(currentSession.run())
+	fmt.Println(currentSession.Eval())
 }
 
 func main() {
@@ -49,7 +42,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	currentSession, err = engine.newSession(wd)
+	currentSession, err = engine.NewSession(wd)
 	if err != nil {
 		panic(err)
 	}

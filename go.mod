@@ -12,4 +12,5 @@ require (
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.2.2
+	golang.org/x/tools v0.0.0-20191007185444-6536af71d98a // indirect
 )

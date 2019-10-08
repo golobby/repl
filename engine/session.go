@@ -12,14 +12,7 @@ import (
 	"github.com/golobby/repl/engine/parser"
 )
 
-var (
-	mapChars = map[string]string{
-		")": "(",
-		"}": "{",
-	}
-)
-
-type session struct {
+type Session struct {
 	imports         []string
 	typesAndMethods []string
 	tmpCodes        []int
@@ -30,41 +23,7 @@ type session struct {
 	indents         int
 }
 
-func (s *session) shouldContinue(code string) bool {
-	var stillOpenChars string
-	for _, c := range code {
-		if c == '{' || c == '(' {
-			stillOpenChars += string(c)
-			continue
-		}
-		if c == '}' || c == ')' {
-			idx := strings.LastIndex(stillOpenChars, mapChars[string(c)])
-			if idx >= 0 {
-				if len(stillOpenChars) == 0 {
-					return false
-				}
-				stillOpenChars = stillOpenChars[:idx] + stillOpenChars[idx+1:]
-			}
-		}
-	}
-	if len(stillOpenChars) > 0 {
-		s.indents = len(stillOpenChars)
-		return true
-	}
-	return false
-}
-
-const moduleTemplate = `module shell
-
-go 1.13
-
-%s
-`
-
-func (s *session) addImport(im string) {
-	s.imports = append(s.imports, im)
-}
-
+/*
 func (s *session) add(code string) {
 	if s.continueMode {
 		s.code[len(s.code)-1] += code
@@ -82,25 +41,72 @@ func (s *session) add(code string) {
 		s.code = append(s.code, code)
 		return
 	}
-	if parser.isImport(code) {
-		s.addImport(code)
-	} else if parser.isFunc(code) || parser.isTypeDecl(code) {
-		s.typesAndMethods = append(s.typesAndMethods, code)
-	} else if parser.isPrint(code) {
-		s.code = append(s.code, code)
-		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
-	} else if parser.isComment(code) {
-		s.code = append(s.code, code)
-	} else {
-		if parser.isExpr(code) {
-			s.add(parser.wrapInPrint(code))
+	else {
+		if isExpr(code) {
+			s.add(wrapInPrint(code))
 			return
 		}
 		s.addCode(code)
 	}
 }
-func (s *session) addCode(code string) {
-	s.code = append(s.code, code)
+*/
+const moduleTemplate = `module shell
+
+go 1.13
+
+%s
+`
+
+func wrapInPrint(code string) string {
+	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
+}
+
+func (s *Session) addImport(im string) {
+	s.imports = append(s.imports, im)
+}
+
+func (s *Session) addCode(typ parser.StmtType, shouldContinue bool, code string) {
+	if shouldContinue {
+		s.code[len(s.code)-1] += code
+		if !parser.ShouldContinue(s.code[len(s.code)-1]) {
+			s.continueMode = false
+			code = s.code[len(s.code)-1]
+			s.code = s.code[:len(s.code)-1]
+			s.Add(code)
+		}
+	}
+	switch typ {
+	case parser.StmtTypeImport:
+		s.addImport(code)
+	case parser.StmtTypeComment:
+		return
+	case parser.StmtTypePrint:
+		s.code = append(s.code, code)
+		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
+	case parser.StmtTypeFuncDecl, parser.StmtTypeTypeDecl:
+		s.typesAndMethods = append(s.typesAndMethods, code)
+	case parser.StmtTypeExpr:
+		s.code = append(s.code, wrapInPrint(code))
+	default:
+		s.code = append(s.code, code)
+	}
+}
+func (s *Session) mergeIfShouldContinue(shouldContinue bool, code string) error {
+	if !shouldContinue {
+		return nil
+	}
+
+	return nil
+}
+
+func (s *Session) Add(code string) error {
+	s.removeTmpCodes()
+	typ, shouldContinue, err := parser.Parse(code)
+	if err != nil {
+		return err
+	}
+	s.addCode(typ, shouldContinue, code)
+	return nil
 }
 
 func createTmpDir(workingDirectory string) (string, error) {
@@ -112,14 +118,17 @@ func createTmpDir(workingDirectory string) (string, error) {
 	return sessionDir, nil
 }
 
-func (s *session) removeTmpCodes() {
+func (s *Session) removeTmpCodes() {
 	for _, t := range s.tmpCodes {
 		s.code[t] = ""
 	}
 	s.tmpCodes = s.tmpCodes[:0]
 }
+func goGet() error {
+	return exec.Command("go", "get", "-u", "./...").Run()
+}
 
-func newSession(workingDirectory string) (*session, error) {
+func NewSession(workingDirectory string) (*Session, error) {
 	sessionDir, err := createTmpDir(workingDirectory)
 	if err != nil {
 		return nil, err
@@ -128,52 +137,90 @@ func newSession(workingDirectory string) (*session, error) {
 	if err != nil {
 		panic(err)
 	}
-	session := &session{
+	session := &Session{
 		imports:    []string{},
 		tmpCodes:   []int{},
 		code:       []string{},
 		sessionDir: sessionDir,
 	}
-	currentModule := parser.getModuleNameOfCurrentProject(workingDirectory)
+	currentModule := getModuleNameOfCurrentProject(workingDirectory)
 	if err = session.createModule(workingDirectory, currentModule); err != nil {
 		return nil, err
 	}
-	err = parser.goGet()
+	err = goGet()
 	if err != nil {
 		return nil, err
 	}
 	return session, nil
 }
-
-func (s *session) removeTmpDir() error {
+func createReplaceRequireClause(moduleName, localPath string) string {
+	if moduleName == "" {
+		return ""
+	}
+	return fmt.Sprintf(`replace %s => %s`, moduleName, localPath)
+}
+func (s *Session) removeTmpDir() error {
 	return os.RemoveAll(s.sessionDir)
 }
 
-func (s *session) createModule(wd string, moduleName string) error {
-	return ioutil.WriteFile("go.mod", []byte(fmt.Sprintf(moduleTemplate, parser.createReplaceRequireClause(moduleName, wd))), 500)
+func (s *Session) createModule(wd string, moduleName string) error {
+	return ioutil.WriteFile("go.mod", []byte(fmt.Sprintf(moduleTemplate, createReplaceRequireClause(moduleName, wd))), 500)
 }
-func (s *session) writeToFile() error {
-	return ioutil.WriteFile(s.sessionDir+"/go", []byte(s.validGoFileFromSession()), 500)
+func (s *Session) writeToFile() error {
+	return ioutil.WriteFile(s.sessionDir+"/main.go", []byte(s.validGoFileFromSession()), 500)
 }
 
-func (s *session) removeLastCode() {
+func (s *Session) removeLastCode() {
 	s.code = s.code[:len(s.code)-1]
 }
+func getModuleNameOfCurrentProject(workingDirectory string) string {
+	bs, err := ioutil.ReadFile(workingDirectory + "/go.mod")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return ""
+		}
+		panic(err)
+	}
+	gomod := string(bs)
+	moduleName := strings.Split(strings.Split(gomod, "\n")[0], " ")[1]
+	return moduleName
+}
 
-func (s *session) run() string {
-	err := os.Chdir(s.sessionDir)
+func checkIfErrIsNotDecl(err string) bool {
+	return strings.Contains(err, "not used")
+}
+func multiplyString(s string, n int) string {
+	var out string
+	if n == 0 {
+		return ""
+	}
+	for i := 0; i < n; i++ {
+		out += s
+	}
+	return out
+}
+
+func (s *Session) Eval() string {
+	if s.continueMode {
+		return multiplyString("...", s.indents)
+	}
+	err := s.writeToFile()
+	if err != nil {
+		return err.Error()
+	}
+	err = os.Chdir(s.sessionDir)
 	if err != nil {
 		panic(err)
 	}
 	cmdImport := exec.Command("goimports", "-w", "main.go")
-	out1, err := cmdImport.CombinedOutput()
+	_, err = cmdImport.CombinedOutput()
 	if err != nil {
-		return fmt.Sprintf("%s", out1)
+		return fmt.Sprintf("%s", err.Error())
 	}
 	cmdRun := exec.Command("go", "run", "main.go")
 	out, err := cmdRun.CombinedOutput()
 	if err != nil {
-		if parser.checkIfErrIsNotDecl(string(out)) {
+		if checkIfErrIsNotDecl(string(out)) {
 			s.removeLastCode()
 			return "Note you are not using something that you define or import"
 		} else {
@@ -183,7 +230,7 @@ func (s *session) run() string {
 	return fmt.Sprintf("%s", out)
 }
 
-func (s *session) validGoFileFromSession() string {
+func (s *Session) validGoFileFromSession() string {
 	code := "package main\n%s\n%s\nfunc main() {\n%s\n}"
 	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.typesAndMethods, "\n"), strings.Join(s.code, "\n"))
 }

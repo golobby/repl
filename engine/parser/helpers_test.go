@@ -129,8 +129,3 @@ func Test_isComment(t *testing.T) {
 	assert.True(t, isComment(`//fmt.Println("Hello")`))
 	assert.False(t, isComment(`fmt.Println("Hello")`))
 }
-func Test_checkIfErrIsNotDecl(t *testing.T) {
-	assert.True(t, checkIfErrIsNotDecl(`"fmt" imported and not used`))
-	assert.True(t, checkIfErrIsNotDecl(`a declared and not used`))
-	assert.False(t, checkIfErrIsNotDecl("not able to compile"))
-}
