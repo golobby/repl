@@ -1,11 +1,11 @@
 package engine
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
 	"bou.ke/monkey"
-	"github.com/golobby/repl"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,19 +16,20 @@ func Test_newSession(t *testing.T) {
 	monkey.Patch(os.Chdir, func(string) error {
 		return nil
 	})
-	monkey.Patch(main.getModuleNameOfCurrentProject, func(string) string {
+	monkey.Patch(getModuleNameOfCurrentProject, func(string) string {
 		return "tmpmodule"
 	})
 	monkey.Unpatch(createTmpDir)
 	monkey.Unpatch(os.Chdir)
-	monkey.Unpatch(main.getModuleNameOfCurrentProject)
+	monkey.Unpatch(getModuleNameOfCurrentProject)
 }
 
 func Test_addCode(t *testing.T) {
 	s := &Session{}
-	s.addCode("fmt.Println(12)")
-	s.addCode("fmt.Println(13)")
-	assert.Equal(t, []string{"fmt.Println(12)", "fmt.Println(13)"}, s.code)
+	s.Add("fmt.Println(12)")
+	assert.Equal(t, []string{"fmt.Println(12)"}, s.code)
+	s.Add("fmt.Println(13)")
+	assert.Equal(t, []string{"fmt.Println(13)"}, s.code)
 }
 func Test_addImport(t *testing.T) {
 	s := &Session{}
@@ -48,87 +49,112 @@ func Test_removeTmpCodes(t *testing.T) {
 	s.code = append(s.code, `fmt.Println("aaa")`)
 	s.tmpCodes = append(s.tmpCodes, 1)
 	s.removeTmpCodes()
-	assert.Equal(t, []string{"a := 1+2", ""}, s.code)
+	assert.Equal(t, []string{"a := 1+2"}, s.code)
 }
 func Test_validGoFileFromSession(t *testing.T) {
 	s := &Session{}
 	s.addImport(`import "fmt"`)
-	s.addCode(`fmt.Println("hey")`)
-	s.addCode(`var a int`)
+	s.Add(`fmt.Println("hey")`)
+	s.Add(`var a int`)
 	assert.Equal(t, `package main
 import "fmt"
 
 func main() {
-fmt.Println("hey")
 var a int
 }`, s.validGoFileFromSession())
 }
 
-func Test_shouldContinue(t *testing.T) {
-	s := &Session{}
-	code1 := "fmt.Println(\n"
-	assert.True(t, s.shouldContinue(code1))
-	assert.Equal(t, 1, s.indents)
-	s = &Session{}
-	code2 := "fmt.Println(fmt.Sprint(2"
-	assert.True(t, s.shouldContinue(code2))
-	assert.Equal(t, 2, s.indents)
-	s = &Session{}
-	code3 := "{fmt.Print("
-	assert.True(t, s.shouldContinue(code3))
-	assert.Equal(t, 2, s.indents)
-	code4 := "fmt.Println(22)"
-	s = &Session{}
-	assert.False(t, s.shouldContinue(code4))
-	assert.Equal(t, 0, s.indents)
-}
-
 func Test_add_print(t *testing.T) {
 	s := &Session{}
-	s.add(`fmt.Println("Salam")`)
-	assert.Equal(t, s.code, []string{`fmt.Println("Salam")`})
-	assert.Equal(t, s.tmpCodes, []int{0})
+	s.Add(`fmt.Println("Salam")`)
+	assert.Equal(t, []string{`fmt.Println("Salam")`}, s.code)
+	assert.Equal(t, []int{0}, s.tmpCodes)
 }
 func Test_add_comment(t *testing.T) {
 	s := &Session{}
-	s.add(`// this is a comment`)
-	assert.Equal(t, s.code, []string{`// this is a comment`})
+	s.Add(`// this is a comment`)
+	assert.Equal(t, []string(nil), s.code)
 }
 
 func Test_add_type_decl(t *testing.T) {
 	s := &Session{}
-	s.add(`type user struct{}`)
+	s.Add(`type user struct{}`)
 	assert.Equal(t, s.typesAndMethods, []string{`type user struct{}`})
 }
 
 func Test_add_isImport(t *testing.T) {
 	s := &Session{}
-	s.add(`import "github.com"`)
+	s.Add(`import "github.com"`)
 	assert.Equal(t, s.imports, []string{`import "github.com"`})
 }
 func Test_add_function_call(t *testing.T) {
 	s := &Session{}
-	s.add(`someFunc("salam man be to yare ghadimi")`)
+	s.Add(`someFunc("salam man be to yare ghadimi")`)
 	assert.Equal(t, s.code, []string{`someFunc("salam man be to yare ghadimi")`})
 }
 func Test_add_expr(t *testing.T) {
 	s := &Session{}
-	s.add(`fmt.Println`)
-	s.add(`"salam"`)
-	s.add(`23`)
-	s.add(`a*(2+3)`)
-	assert.Equal(t, s.code, []string{main.wrapInPrint(`fmt.Println`), main.wrapInPrint(`"salam"`), main.wrapInPrint(`23`), main.wrapInPrint(`a*(2+3)`)})
+	s.Add(`fmt.Println`)
+	assert.Equal(t, []string{wrapInPrint(`fmt.Println`)}, s.code)
+	s.Add(`"salam"`)
+	assert.Equal(t, []string{wrapInPrint(`"salam"`)}, s.code)
+	s.Add(`23`)
+	assert.Equal(t, []string{wrapInPrint(`23`)}, s.code)
+	s.Add(`a*(2+3)`)
+	assert.Equal(t, []string{wrapInPrint(`a*(2+3)`)}, s.code)
 }
 func Test_add_continue_mode(t *testing.T) {
 	s := &Session{}
-	s.add("fmt.Println(")
-	s.add("2")
-	s.add(")")
-	assert.Equal(t, s.code, []string{"fmt.Println(2)"})
+	s.Add("fmt.Println(")
+	s.Add("2")
+	s.Add(")")
+	assert.Equal(t, []string{"fmt.Println(2)"}, s.code)
 }
 
 func Test_checkIfErrIsNotDecl(t *testing.T) {
 	assert.True(t, checkIfErrIsNotDecl(`"fmt" imported and not used`))
 	assert.True(t, checkIfErrIsNotDecl(`a declared and not used`))
 	assert.False(t, checkIfErrIsNotDecl("not able to compile"))
+}
+func Test_createReplaceRequireClause_with_moduleName(t *testing.T) {
+	moduleName := "shell"
+	localPath := "inja"
+	assert.Equal(t, "replace shell => inja", createReplaceRequireClause(moduleName, localPath))
+}
+
+func Test_createReplaceRequireClause_without_moduleName(t *testing.T) {
+	moduleName := ""
+	localPath := "inja"
+	assert.Equal(t, "", createReplaceRequireClause(moduleName, localPath))
+}
+func Test_wrapInPrint(t *testing.T) {
+	assert.Equal(t, `fmt.Printf("<%T> %+v\n", 1+2, 1+2)`, wrapInPrint("1+2"))
+	assert.Equal(t, `fmt.Printf("<%T> %+v\n", "Hello", "Hello")`, wrapInPrint(`"Hello"`))
+
+}
+func Test_multiplyString(t *testing.T) {
+	assert.Equal(t, "", multiplyString("...", 0))
+	assert.Equal(t, "...", multiplyString("...", 1))
+	assert.Equal(t, "......", multiplyString("...", 2))
+	assert.Equal(t, ".........", multiplyString("...", 3))
+
+}
+
+func Test_getModuleNameOfCurrentProject_in_go_project(t *testing.T) {
+	monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return []byte(`module somemodule
+go 1.13`), nil
+	})
+	moduleName := getModuleNameOfCurrentProject("somedir")
+	assert.Equal(t, moduleName, "somemodule")
+	monkey.Unpatch(ioutil.ReadFile)
+}
+
+func Test_getModuleNameOfCurrentProject_not_in_go_project(t *testing.T) {
+	monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return nil, os.ErrNotExist
+	})
+	moduleName := getModuleNameOfCurrentProject("somedir")
+	assert.Equal(t, moduleName, "")
+	monkey.Unpatch(ioutil.ReadFile)
 }

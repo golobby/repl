@@ -34,7 +34,7 @@ func handler(c string) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(currentSession.Eval())
+	fmt.Print(currentSession.Eval())
 }
 
 func main() {

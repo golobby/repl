@@ -64,49 +64,66 @@ func wrapInPrint(code string) string {
 func (s *Session) addImport(im string) {
 	s.imports = append(s.imports, im)
 }
+func (s *Session) appendToLastCode(code string) {
+	if len(s.code) < 1 {
+		s.code = append(s.code, code)
+		return
+	}
+	s.code[len(s.code)-1] += code
+	return
+}
 
-func (s *Session) addCode(typ parser.StmtType, shouldContinue bool, code string) {
-	if shouldContinue {
-		s.code[len(s.code)-1] += code
-		if !parser.ShouldContinue(s.code[len(s.code)-1]) {
+func (s *Session) addCode(typ parser.StmtType, code string) error {
+	if s.continueMode {
+		s.appendToLastCode(code)
+		indents, shouldContinue := parser.ShouldContinue(s.code[len(s.code)-1])
+		s.indents = indents
+		if !shouldContinue {
 			s.continueMode = false
 			code = s.code[len(s.code)-1]
 			s.code = s.code[:len(s.code)-1]
 			s.Add(code)
+			return nil
 		}
+		return nil
+	}
+	indents, shouldContinue := parser.ShouldContinue(code)
+	s.indents = indents
+	if shouldContinue {
+		s.continueMode = true
+		s.code = append(s.code, code)
+		return nil
 	}
 	switch typ {
 	case parser.StmtTypeImport:
 		s.addImport(code)
+		return nil
 	case parser.StmtTypeComment:
-		return
+		return nil
 	case parser.StmtTypePrint:
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
+		return nil
 	case parser.StmtTypeFuncDecl, parser.StmtTypeTypeDecl:
 		s.typesAndMethods = append(s.typesAndMethods, code)
+		return nil
 	case parser.StmtTypeExpr:
-		s.code = append(s.code, wrapInPrint(code))
+		return s.Add(wrapInPrint(code))
+	case parser.StmtEmpty:
+		return nil
 	default:
 		s.code = append(s.code, code)
-	}
-}
-func (s *Session) mergeIfShouldContinue(shouldContinue bool, code string) error {
-	if !shouldContinue {
 		return nil
 	}
-
-	return nil
 }
 
 func (s *Session) Add(code string) error {
 	s.removeTmpCodes()
-	typ, shouldContinue, err := parser.Parse(code)
+	typ, err := parser.Parse(code)
 	if err != nil {
 		return err
 	}
-	s.addCode(typ, shouldContinue, code)
-	return nil
+	return s.addCode(typ, code)
 }
 
 func createTmpDir(workingDirectory string) (string, error) {
@@ -123,6 +140,11 @@ func (s *Session) removeTmpCodes() {
 		s.code[t] = ""
 	}
 	s.tmpCodes = s.tmpCodes[:0]
+	for idx, c := range s.code {
+		if c == "" {
+			s.code = append(s.code[:idx], s.code[idx+1:]...)
+		}
+	}
 }
 func goGet() error {
 	return exec.Command("go", "get", "-u", "./...").Run()
@@ -201,6 +223,9 @@ func multiplyString(s string, n int) string {
 }
 
 func (s *Session) Eval() string {
+	if len(s.code) == 0 {
+		return ""
+	}
 	if s.continueMode {
 		return multiplyString("...", s.indents)
 	}

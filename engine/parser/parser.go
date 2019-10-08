@@ -20,30 +20,28 @@ const (
 	StmtEmpty
 )
 
-func Parse(code string) (StmtType, bool, error) {
-
-	if len(code) < 1 {
-		return StmtEmpty, false, nil
-	}
-	if isComment(code) {
-		return StmtTypeComment, ShouldContinue(code), nil
-	} else if isImport(code) {
-		return StmtTypeImport, ShouldContinue(code), nil
-	} else if isFunc(code) {
-		return StmtTypeFuncDecl, ShouldContinue(code), nil
-	} else if isTypeDecl(code) {
-		return StmtTypeTypeDecl, ShouldContinue(code), nil
-	} else if isPrint(code) {
-		return StmtTypePrint, ShouldContinue(code), nil
+func Parse(code string) (StmtType, error) {
+	if isEmpty(code) {
+		return StmtEmpty, nil
 	} else if isComment(code) {
-		return StmtTypeComment, ShouldContinue(code), nil
+		return StmtTypeComment, nil
+	} else if isImport(code) {
+		return StmtTypeImport, nil
+	} else if isFunc(code) {
+		return StmtTypeFuncDecl, nil
+	} else if isTypeDecl(code) {
+		return StmtTypeTypeDecl, nil
+	} else if isPrint(code) {
+		return StmtTypePrint, nil
+	} else if isComment(code) {
+		return StmtTypeComment, nil
 	} else if isExpr(code) {
-		return StmtTypeExpr, ShouldContinue(code), nil
+		return StmtTypeExpr, nil
 	} else {
-		return StmtUnknown, ShouldContinue(code), nil
+		return StmtUnknown, nil
 	}
 }
-func ShouldContinue(code string) bool {
+func ShouldContinue(code string) (int, bool) {
 	var stillOpenChars int
 	for _, c := range code {
 		if c == '{' || c == '(' {
@@ -54,9 +52,15 @@ func ShouldContinue(code string) bool {
 			stillOpenChars--
 		}
 	}
-	return stillOpenChars > 0
+	return stillOpenChars, stillOpenChars > 0
+}
+func isEmpty(code string) bool {
+	return len(code) == 0
 }
 func isComment(code string) bool {
+	if len(code) < 2 {
+		return false
+	}
 	if code[:2] == "//" || code[:2] == "/*" {
 		return true
 	}

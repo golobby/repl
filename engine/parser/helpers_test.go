@@ -1,12 +1,9 @@
 package parser
 
 import (
-	"io/ioutil"
-	"os"
 	"regexp"
 	"testing"
 
-	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,18 +39,6 @@ func Test_isTypeDecl_false(t *testing.T) {
 	assert.False(t, isTypeDecl(code))
 }
 
-func Test_createReplaceRequireClause_with_moduleName(t *testing.T) {
-	moduleName := "shell"
-	localPath := "inja"
-	assert.Equal(t, "replace shell => inja", createReplaceRequireClause(moduleName, localPath))
-}
-
-func Test_createReplaceRequireClause_without_moduleName(t *testing.T) {
-	moduleName := ""
-	localPath := "inja"
-	assert.Equal(t, "", createReplaceRequireClause(moduleName, localPath))
-}
-
 func Test_isPrint_true(t *testing.T) {
 	assert.True(t, true, isPrint("fmt.Println()"))
 	assert.True(t, true, isPrint("fmt.Printf()"))
@@ -84,37 +69,6 @@ func Test_isFuncCall(t *testing.T) {
 	assert.True(t, isFunctionCall("println()"))
 
 	assert.False(t, isFunctionCall("2*3(1+2)"))
-}
-
-func Test_wrapInPrint(t *testing.T) {
-	assert.Equal(t, `fmt.Printf("<%T> %+v\n", 1+2, 1+2)`, wrapInPrint("1+2"))
-	assert.Equal(t, `fmt.Printf("<%T> %+v\n", "Hello", "Hello")`, wrapInPrint(`"Hello"`))
-
-}
-func Test_multiplyString(t *testing.T) {
-	assert.Equal(t, "", multiplyString("...", 0))
-	assert.Equal(t, "...", multiplyString("...", 1))
-	assert.Equal(t, "......", multiplyString("...", 2))
-	assert.Equal(t, ".........", multiplyString("...", 3))
-
-}
-func Test_getModuleNameOfCurrentProject_in_go_project(t *testing.T) {
-	monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
-		return []byte(`module somemodule
-go 1.13`), nil
-	})
-	moduleName := getModuleNameOfCurrentProject("somedir")
-	assert.Equal(t, moduleName, "somemodule")
-	monkey.Unpatch(ioutil.ReadFile)
-}
-
-func Test_getModuleNameOfCurrentProject_not_in_go_project(t *testing.T) {
-	monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
-		return nil, os.ErrNotExist
-	})
-	moduleName := getModuleNameOfCurrentProject("somedir")
-	assert.Equal(t, moduleName, "")
-	monkey.Unpatch(ioutil.ReadFile)
 }
 
 func Test_isExpr(t *testing.T) {
