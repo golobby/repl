@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/golobby/repl/engine/parser"
 )
 
 var (
@@ -80,18 +82,18 @@ func (s *session) add(code string) {
 		s.code = append(s.code, code)
 		return
 	}
-	if isImport(code) {
+	if parser.isImport(code) {
 		s.addImport(code)
-	} else if isFunc(code) || isTypeDecl(code) {
+	} else if parser.isFunc(code) || parser.isTypeDecl(code) {
 		s.typesAndMethods = append(s.typesAndMethods, code)
-	} else if isPrint(code) {
+	} else if parser.isPrint(code) {
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
-	} else if isComment(code) {
+	} else if parser.isComment(code) {
 		s.code = append(s.code, code)
 	} else {
-		if isExpr(code) {
-			s.add(wrapInPrint(code))
+		if parser.isExpr(code) {
+			s.add(parser.wrapInPrint(code))
 			return
 		}
 		s.addCode(code)
@@ -132,11 +134,11 @@ func newSession(workingDirectory string) (*session, error) {
 		code:       []string{},
 		sessionDir: sessionDir,
 	}
-	currentModule := getModuleNameOfCurrentProject(workingDirectory)
+	currentModule := parser.getModuleNameOfCurrentProject(workingDirectory)
 	if err = session.createModule(workingDirectory, currentModule); err != nil {
 		return nil, err
 	}
-	err = goGet()
+	err = parser.goGet()
 	if err != nil {
 		return nil, err
 	}
@@ -148,10 +150,10 @@ func (s *session) removeTmpDir() error {
 }
 
 func (s *session) createModule(wd string, moduleName string) error {
-	return ioutil.WriteFile("go.mod", []byte(fmt.Sprintf(moduleTemplate, createReplaceRequireClause(moduleName, wd))), 500)
+	return ioutil.WriteFile("go.mod", []byte(fmt.Sprintf(moduleTemplate, parser.createReplaceRequireClause(moduleName, wd))), 500)
 }
 func (s *session) writeToFile() error {
-	return ioutil.WriteFile(s.sessionDir+"/main.go", []byte(s.validGoFileFromSession()), 500)
+	return ioutil.WriteFile(s.sessionDir+"/go", []byte(s.validGoFileFromSession()), 500)
 }
 
 func (s *session) removeLastCode() {
@@ -171,7 +173,7 @@ func (s *session) run() string {
 	cmdRun := exec.Command("go", "run", "main.go")
 	out, err := cmdRun.CombinedOutput()
 	if err != nil {
-		if checkIfErrIsNotDecl(string(out)) {
+		if parser.checkIfErrIsNotDecl(string(out)) {
 			s.removeLastCode()
 			return "Note you are not using something that you define or import"
 		} else {

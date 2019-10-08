@@ -1,10 +1,11 @@
-package main
+package engine
 
 import (
 	"os"
 	"testing"
 
 	"bou.ke/monkey"
+	"github.com/golobby/repl"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,12 +16,12 @@ func Test_newSession(t *testing.T) {
 	monkey.Patch(os.Chdir, func(string) error {
 		return nil
 	})
-	monkey.Patch(getModuleNameOfCurrentProject, func(string) string {
+	monkey.Patch(main.getModuleNameOfCurrentProject, func(string) string {
 		return "tmpmodule"
 	})
 	monkey.Unpatch(createTmpDir)
 	monkey.Unpatch(os.Chdir)
-	monkey.Unpatch(getModuleNameOfCurrentProject)
+	monkey.Unpatch(main.getModuleNameOfCurrentProject)
 }
 
 func Test_addCode(t *testing.T) {
@@ -116,7 +117,7 @@ func Test_add_expr(t *testing.T) {
 	s.add(`"salam"`)
 	s.add(`23`)
 	s.add(`a*(2+3)`)
-	assert.Equal(t, s.code, []string{wrapInPrint(`fmt.Println`), wrapInPrint(`"salam"`), wrapInPrint(`23`), wrapInPrint(`a*(2+3)`)})
+	assert.Equal(t, s.code, []string{main.wrapInPrint(`fmt.Println`), main.wrapInPrint(`"salam"`), main.wrapInPrint(`23`), main.wrapInPrint(`a*(2+3)`)})
 }
 func Test_add_continue_mode(t *testing.T) {
 	s := &session{}

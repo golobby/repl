@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/c-bata/go-prompt"
+	"github.com/golobby/repl/engine"
 )
 
 var (
-	currentSession *session
+	currentSession *engine.session
 )
 
 const (
@@ -37,7 +38,7 @@ func handler(c string) {
 		return
 	}
 	if currentSession.continueMode {
-		fmt.Print(multiplyString("...", currentSession.indents))
+		fmt.Print(engine.multiplyString("...", currentSession.indents))
 		return
 	}
 	fmt.Println(currentSession.run())
@@ -48,7 +49,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	currentSession, err = newSession(wd)
+	currentSession, err = engine.newSession(wd)
 	if err != nil {
 		panic(err)
 	}
