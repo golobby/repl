@@ -95,11 +95,19 @@ func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
 	return subMatchMap
 }
 func isVarDecl(code string) bool {
-	matched, err := regexp.Match(`(var)?\s*.+\s+:?=\s*[a-zA-Z0-9_.-]+\(.*\)`, []byte(code))
+	matched1, err := regexp.Match(`(var)?\s*.+\s+:?=\s*[a-zA-Z0-9_.-]+\(.*\)`, []byte(code))
 	if err != nil {
 		return false
 	}
-	return matched
+	matched2, err := regexp.Match(`var\s+.+\s+.+`, []byte(code))
+	if err != nil {
+		return false
+	}
+	matched3, err := regexp.Match(`(var)?\s*.+\s?:?=\s*.+`, []byte(code))
+	if err != nil {
+		return false
+	}
+	return matched1 || matched2 || matched3
 }
 func isFunctionCall(code string) bool {
 	m, err := regexp.Match("^[a-zA-Z0-9_.-]+\\(.*\\)", []byte(code))

@@ -90,7 +90,7 @@ func Test_add_isImport(t *testing.T) {
 func Test_add_function_call(t *testing.T) {
 	s := &Session{}
 	s.Add(`someFunc("salam man be to yare ghadimi")`)
-	assert.Equal(t, s.code, []string{`someFunc("salam man be to yare ghadimi")`})
+	assert.Equal(t, s.code, []string{wrapInPrint(`someFunc("salam man be to yare ghadimi")`)})
 }
 func Test_add_expr(t *testing.T) {
 	s := &Session{}
