@@ -26,10 +26,19 @@ func Test_newSession(t *testing.T) {
 
 func Test_addCode(t *testing.T) {
 	s := &Session{}
-	s.Add("fmt.Println(12)")
+	err := s.Add("fmt.Println(12)")
+	assert.NoError(t, err)
 	assert.Equal(t, []string{"fmt.Println(12)"}, s.code)
-	s.Add("fmt.Println(13)")
+	err = s.Add("fmt.Println(13)")
+	assert.NoError(t, err)
 	assert.Equal(t, []string{"fmt.Println(13)"}, s.code)
+	err = s.Add("type user struct{")
+	assert.NoError(t, err)
+	err = s.Add("Name string")
+	assert.NoError(t, err)
+	err = s.Add("}")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"type user struct{Name string}"}, s.typesAndMethods)
 }
 func Test_addImport(t *testing.T) {
 	s := &Session{}

@@ -70,14 +70,19 @@ func Test_isFuncCall(t *testing.T) {
 
 	assert.False(t, isFunctionCall("2*3(1+2)"))
 }
+func Test_has_output(t *testing.T) {
+	assert.True(t, hasOutput(`x := 2`))
+	assert.False(t, hasOutput(`x == 2`))
+}
 
 func Test_isExpr(t *testing.T) {
-	//assert.True(t, isExpr("1+2"))
-	//assert.True(t, isExpr(`"Hello World"`))
-	//assert.False(t, isExpr("var x int"))
+	assert.True(t, isExpr("1+2"))
+	assert.True(t, isExpr(`"Hello World"`))
+	assert.False(t, isExpr("var x int"))
 	assert.False(t, isExpr("x:=2"))
 }
 func Test_isComment(t *testing.T) {
+	assert.False(t, isComment(""))
 	assert.True(t, isComment("// salam"))
 	assert.True(t, isComment("/* salam */"))
 	assert.True(t, isComment(`//fmt.Println("Hello")`))

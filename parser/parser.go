@@ -8,7 +8,7 @@ import (
 type StmtType uint8
 
 const (
-	StmtTypeFunctionCall = iota
+	StmtTypeFunctionCall = StmtType(iota)
 	StmtTypeImport
 	StmtTypePrint
 	StmtTypeComment
@@ -32,8 +32,6 @@ func Parse(code string) (StmtType, error) {
 		return StmtTypeTypeDecl, nil
 	} else if isPrint(code) {
 		return StmtTypePrint, nil
-	} else if isComment(code) {
-		return StmtTypeComment, nil
 	} else if isExpr(code) {
 		return StmtTypeExpr, nil
 	} else {
