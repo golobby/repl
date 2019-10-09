@@ -35,7 +35,6 @@ func handler(input string) {
 	}
 
 	fmt.Print(currentSession.Eval())
-	fmt.Println()
 }
 
 func main() {
