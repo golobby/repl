@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/golobby/repl.svg?branch=master)](https://travis-ci.org/golobby/repl)
+[![Build Status](https://travis-ci.org/golobby/repl.png?branch=master)](https://travis-ci.org/golobby/repl)
 [![Coverage State](https://coveralls.io/repos/github/golobby/repl/badge.png?branch=master)](https://coveralls.io/github/golobby/repl)
 # REPL
 ## Getting Started
