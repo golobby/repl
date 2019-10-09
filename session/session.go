@@ -211,13 +211,18 @@ func (s *Session) Eval() string {
 	if err != nil {
 		panic(err)
 	}
-	cmdImport := exec.Command("goimports", "-w", "main.go")
-	_, err = cmdImport.CombinedOutput()
+	cmdFmt := exec.Command("gofmt", "-w", "main.go")
+	out, err := cmdFmt.CombinedOutput()
 	if err != nil {
-		return fmt.Sprintf("%s", err.Error())
+		return fmt.Sprintf("%s %s", string(out), err.Error())
+	}
+	cmdImport := exec.Command("goimports", "-w", "main.go")
+	out, err = cmdImport.CombinedOutput()
+	if err != nil {
+		return fmt.Sprintf("%s %s", string(out), err.Error())
 	}
 	cmdRun := exec.Command("go", "run", "main.go")
-	out, err := cmdRun.CombinedOutput()
+	out, err = cmdRun.CombinedOutput()
 	if err != nil {
 		if checkIfErrIsNotDecl(string(out)) {
 			return "Note you are not using something that you define or import"

@@ -139,11 +139,12 @@ func isImport(im string) bool {
 	return matched
 }
 func isPrint(code string) bool {
-	matched1, err := regexp.Match("^fmt.Print.*\\(.*\\)", []byte(code))
+
+	matched1, err := regexp.Match(`(fmt)\.Print.*\(\s*.*\s*\)`, []byte(code))
 	if err != nil {
 		panic(err)
 	}
-	matched2, err := regexp.Match("^print(ln|f).*", []byte(code))
+	matched2, err := regexp.Match(`^print(ln|f)\(\s*.*\s*\)`, []byte(code))
 	if err != nil {
 		panic(err)
 	}
