@@ -120,8 +120,12 @@ func (s *Session) removeTmpCodes() {
 		}
 	}
 }
+func goBuild() error {
+	return exec.Command("go", "build", "./...").Run()
+}
+
 func goGet() error {
-	return exec.Command("go", "get", "-u", "./...").Run()
+	return exec.Command("go", "get", "./...").Run()
 }
 
 func NewSession(workingDirectory string) (*Session, error) {
@@ -143,7 +147,15 @@ func NewSession(workingDirectory string) (*Session, error) {
 	if err = session.createModule(workingDirectory, currentModule); err != nil {
 		return nil, err
 	}
+	err = session.writeToFile()
+	if err != nil {
+		return nil, err
+	}
 	err = goGet()
+	if err != nil {
+		return nil, err
+	}
+	err = goBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +233,7 @@ func (s *Session) Eval() string {
 	if err != nil {
 		return fmt.Sprintf("%s %s", string(out), err.Error())
 	}
-	cmdRun := exec.Command("go", "run", "main.go")
+	cmdRun := exec.Command("/bin/sh", "-c", "go build -o repl_session; ./repl_session")
 	out, err = cmdRun.CombinedOutput()
 	if err != nil {
 		if checkIfErrIsNotDecl(string(out)) {

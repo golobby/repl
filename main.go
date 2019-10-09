@@ -2,15 +2,18 @@ package main
 
 import (
 	"encoding/base64"
+	"flag"
 	"fmt"
 	"github.com/golobby/repl/session"
 	"os"
+	"time"
 
 	"github.com/c-bata/go-prompt"
 )
 
 var (
 	currentSession *session.Session
+	DEBUG          bool
 )
 
 const (
@@ -29,12 +32,19 @@ func completer(d prompt.Document) []prompt.Suggest {
 }
 
 func handler(input string) {
+	var start time.Time
+	if DEBUG {
+		start = time.Now()
+	}
 	err := currentSession.Add(input)
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Print(currentSession.Eval())
+	if DEBUG {
+		fmt.Printf(":::::: D => %v\n", time.Since(start))
+	}
 }
 
 func main() {
@@ -42,6 +52,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	debug := flag.Bool("debug", false, "turns debug mode on")
+	flag.Parse()
+	DEBUG = *debug
 
 	currentSession, err = session.NewSession(wd)
 	if err != nil {
