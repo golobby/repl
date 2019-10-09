@@ -42,15 +42,18 @@ func Parse(code string) (StmtType, error) {
 }
 func ShouldContinue(code string) (int, bool) {
 	var stillOpenChars int
+
 	for _, c := range code {
 		if c == '{' || c == '(' {
 			stillOpenChars++
 			continue
 		}
+
 		if c == '}' || c == ')' {
 			stillOpenChars--
 		}
 	}
+
 	return stillOpenChars, stillOpenChars > 0
 }
 func isEmpty(code string) bool {

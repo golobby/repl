@@ -1,4 +1,4 @@
-package engine
+package session
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golobby/repl/engine/parser"
+	"github.com/golobby/repl/parser"
 )
 
 type Session struct {
@@ -37,8 +37,9 @@ func wrapInPrint(code string) string {
 func (s *Session) addImport(im string) {
 	s.imports = append(s.imports, im)
 }
+
 func (s *Session) appendToLastCode(code string) {
-	if len(s.code) < 1 {
+	if len(s.code) == 0 {
 		s.code = append(s.code, code)
 		return
 	}
@@ -46,7 +47,7 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
-func (s *Session) addCode(typ parser.StmtType, code string) error {
+func (s *Session) addCode(t parser.StmtType, code string) error {
 	if s.continueMode {
 		s.appendToLastCode(code)
 		indents, shouldContinue := parser.ShouldContinue(s.code[len(s.code)-1])
@@ -67,7 +68,7 @@ func (s *Session) addCode(typ parser.StmtType, code string) error {
 		s.code = append(s.code, code)
 		return nil
 	}
-	switch typ {
+	switch t {
 	case parser.StmtTypeImport:
 		s.addImport(code)
 		return nil
