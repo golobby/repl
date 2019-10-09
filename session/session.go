@@ -223,13 +223,8 @@ func (s *Session) Eval() string {
 	if err != nil {
 		panic(err)
 	}
-	cmdFmt := exec.Command("gofmt", "-w", "main.go")
-	out, err := cmdFmt.CombinedOutput()
-	if err != nil {
-		return fmt.Sprintf("%s %s", string(out), err.Error())
-	}
 	cmdImport := exec.Command("goimports", "-w", "main.go")
-	out, err = cmdImport.CombinedOutput()
+	out, err := cmdImport.CombinedOutput()
 	if err != nil {
 		return fmt.Sprintf("%s %s", string(out), err.Error())
 	}
