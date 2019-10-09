@@ -23,33 +23,6 @@ type Session struct {
 	indents         int
 }
 
-/*
-func (s *session) add(code string) {
-	if s.continueMode {
-		s.code[len(s.code)-1] += code
-		if !s.shouldContinue(s.code[len(s.code)-1]) {
-			s.continueMode = false
-			code = s.code[len(s.code)-1]
-			s.code = s.code[:len(s.code)-1]
-			s.add(code)
-			return
-		}
-		return
-	}
-	if s.shouldContinue(code) {
-		s.continueMode = true
-		s.code = append(s.code, code)
-		return
-	}
-	else {
-		if isExpr(code) {
-			s.add(wrapInPrint(code))
-			return
-		}
-		s.addCode(code)
-	}
-}
-*/
 const moduleTemplate = `module shell
 
 go 1.13
