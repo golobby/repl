@@ -43,7 +43,7 @@ func (s *Session) appendToLastCode(code string) {
 		s.code = append(s.code, code)
 		return
 	}
-	s.code[len(s.code)-1] += code
+	s.code[len(s.code)-1] += "\n" + code
 	return
 }
 
@@ -101,7 +101,7 @@ func (s *Session) Add(code string) error {
 }
 
 func createTmpDir(workingDirectory string) (string, error) {
-	sessionDir := workingDirectory + "/.goshell/sessions/" + fmt.Sprint(time.Now().Nanosecond())
+	sessionDir := workingDirectory + "/.repl/sessions/" + fmt.Sprint(time.Now().Nanosecond())
 	err := os.MkdirAll(sessionDir, 500)
 	if err != nil {
 		return sessionDir, err

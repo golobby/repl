@@ -39,6 +39,17 @@ func Test_addCode(t *testing.T) {
 	err = s.Add("}")
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"type user struct{Name string}"}, s.typesAndMethods)
+	err = s.Add("")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{}, s.code)
+	s.code = []string{}
+	err = s.Add("fmt.Println(")
+	assert.NoError(t, err)
+	err = s.Add(`"Salam"`)
+	assert.NoError(t, err)
+	err = s.Add(`)`)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{`fmt.Println("Salam")`}, s.code)
 }
 func Test_addImport(t *testing.T) {
 	s := &Session{}
