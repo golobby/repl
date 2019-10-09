@@ -49,7 +49,7 @@ func Test_addCode(t *testing.T) {
 	assert.NoError(t, err)
 	err = s.Add(`)`)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{`fmt.Println("Salam")`}, s.code)
+	assert.Equal(t, []string{"fmt.Println(\n\"Salam\"\n)"}, s.code)
 }
 func Test_addImport(t *testing.T) {
 	s := &Session{}
@@ -128,7 +128,7 @@ func Test_add_continue_mode(t *testing.T) {
 	s.Add("fmt.Println(")
 	s.Add("2")
 	s.Add(")")
-	assert.Equal(t, []string{"fmt.Println(2)"}, s.code)
+	assert.Equal(t, []string{"fmt.Println(\n2\n)"}, s.code)
 }
 
 func Test_checkIfErrIsNotDecl(t *testing.T) {
