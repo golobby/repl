@@ -18,7 +18,7 @@ func ParseCmd(code string) (REPLCmd, string) {
 	} else if isHelp(code) {
 		return REPLCmdHelp, ""
 	} else if isTypeVal(code) {
-		return REPLCmdTypeVal, strings.Split(code, " ")[1]
+		return REPLCmdTypeVal, code[strings.Index(code, " ")+1:]
 	} else if isPop(code) {
 		if len(strings.Split(code, " ")) > 1 {
 			return REPLCmdPop, strings.Split(code, " ")[1]
