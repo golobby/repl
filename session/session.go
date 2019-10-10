@@ -1,6 +1,7 @@
 package session
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,7 @@ import (
 )
 
 type Session struct {
+	shellCmdOutput  string
 	imports         []string
 	typesAndMethods []string
 	tmpCodes        []int
@@ -47,6 +49,20 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
+func (s *Session) handleShellCommands(code string) error {
+	typ, data := parser.ParseCmd(code)
+	switch typ {
+	case parser.REPLCmdDoc:
+		output, err := goDoc(data)
+		if err != nil {
+			return err
+		}
+		s.shellCmdOutput = string(output)
+	default:
+		return errors.New("unknown command")
+	}
+	return nil
+}
 func (s *Session) addCode(t parser.StmtType, code string) error {
 	if s.continueMode {
 		s.appendToLastCode(code)
@@ -69,6 +85,8 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		return nil
 	}
 	switch t {
+	case parser.StmtShell:
+		return s.handleShellCommands(code)
 	case parser.StmtTypeImport:
 		s.addImport(code)
 		return nil
@@ -126,6 +144,10 @@ func goBuild() error {
 
 func goGet() error {
 	return exec.Command("go", "get", "./...").Run()
+}
+
+func goDoc(code string) ([]byte, error) {
+	return exec.Command("go", "doc", code).CombinedOutput()
 }
 
 func NewSession(workingDirectory string) (*Session, error) {
@@ -209,6 +231,11 @@ func multiplyString(s string, n int) string {
 }
 
 func (s *Session) Eval() string {
+	if s.shellCmdOutput != "" {
+		output := s.shellCmdOutput
+		s.shellCmdOutput = ""
+		return output
+	}
 	if len(s.code) == 0 {
 		return ""
 	}
