@@ -30,6 +30,7 @@ List of REPL commands:
 	:doc => shows go documentation of package/function
 	:e => evaluates expression
 	:pop => pop latest code from session
+	:log => shows all codes in the session
 `
 const moduleTemplate = `module shell
 
@@ -114,10 +115,6 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		return nil
 	case parser.StmtTypePrint:
 		s.code = append(s.code, code)
-		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
-		return nil
-	case parser.StmtTypeExpr:
-		s.code = append(s.code, wrapInPrint(code))
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
 		return nil
 	case parser.StmtTypeFuncDecl, parser.StmtTypeTypeDecl:

@@ -32,7 +32,7 @@ console will get directly to the go project and will be compiled instantly and y
 ## Features
 
 ### Instant Expression Evaluation
-REPL automatically understands if you have typed an expression and evaluates it and shows to you type and value of result.
+REPL can easily evaluate an expression for you with a simple built-in command.
 ### Automated Imports
 REPL uses the power of goimports so it can almost identify all packages you use and automatically import them for you.
 
@@ -51,7 +51,23 @@ go doc is available as a shell command so you can access any document about any 
 :doc fmt
 :doc json.Marshal
 ```
-
+#### Eval
+```go
+:e 1+2
+// <int> 3
+:e "HelloWorld"
+// <string> "HelloWorld"
+```
+#### Log
+shows the log of current session.
+```go
+:log
+```
+#### Pop
+pops latest entered code from session.
+```go
+:pop
+```
 ## Demo
 [![asciicast](https://asciinema.org/a/272640.svg)](https://asciinema.org/a/272640)
 
