@@ -24,6 +24,11 @@ type Session struct {
 	indents         int
 }
 
+const helpText = `
+List of REPL commands:
+	:help => shows help
+	:doc => shows go documentation of package/function
+`
 const moduleTemplate = `module shell
 
 go 1.13
@@ -57,6 +62,10 @@ func (s *Session) handleShellCommands(code string) error {
 			return err
 		}
 		s.shellCmdOutput = string(output)
+		return nil
+	case parser.REPLCmdHelp:
+		s.shellCmdOutput = helpText
+		return nil
 	default:
 		return nil
 	}
