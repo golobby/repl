@@ -69,7 +69,6 @@ pops latest entered code from session.
 :pop
 ```
 ## Demo
-[![asciicast](https://asciinema.org/a/273619.svg)](https://asciinema.org/a/273619)
-
+[![asciicast](https://asciinema.org/a/273628.svg)](https://asciinema.org/a/273628)
 ## TODO
 ##### Code completion (with gocode)
