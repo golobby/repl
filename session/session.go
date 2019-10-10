@@ -1,7 +1,6 @@
 package session
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -49,19 +48,20 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
-func (s *Session) handleShellCommands(code string) error {
+func (s *Session) handleShellCommands(code string) {
 	typ, data := parser.ParseCmd(code)
 	switch typ {
 	case parser.REPLCmdDoc:
 		output, err := goDoc(data)
 		if err != nil {
-			return err
+			s.shellCmdOutput = err.Error()
+			return
 		}
 		s.shellCmdOutput = string(output)
 	default:
-		return errors.New("unknown command")
+		return
 	}
-	return nil
+	return
 }
 func (s *Session) addCode(t parser.StmtType, code string) error {
 	if s.continueMode {
@@ -86,7 +86,8 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 	}
 	switch t {
 	case parser.StmtShell:
-		return s.handleShellCommands(code)
+		s.handleShellCommands(code)
+		return nil
 	case parser.StmtTypeImport:
 		s.addImport(code)
 		return nil
