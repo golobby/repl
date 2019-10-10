@@ -29,6 +29,7 @@ List of REPL commands:
 	:help => shows help
 	:doc => shows go documentation of package/function
 	:e => evaluates expression
+	:pop => pop latest code from session
 `
 const moduleTemplate = `module shell
 
@@ -69,6 +70,14 @@ func (s *Session) handleShellCommands(code string) error {
 		return nil
 	case parser.REPLCmdTypeVal:
 		return s.Add(wrapInPrint(data))
+	case parser.REPLCmdPop:
+		s.code = s.code[:len(s.code)-1]
+		return nil
+	case parser.REPLCmdLog:
+		allcodes := append(s.imports, s.typesAndMethods...)
+		allcodes = append(allcodes, s.code...)
+		s.shellCmdOutput = strings.Join(allcodes, "\n")
+		return nil
 	default:
 		return nil
 	}
@@ -107,11 +116,13 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
 		return nil
+	case parser.StmtTypeExpr:
+		s.code = append(s.code, wrapInPrint(code))
+		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
+		return nil
 	case parser.StmtTypeFuncDecl, parser.StmtTypeTypeDecl:
 		s.typesAndMethods = append(s.typesAndMethods, code)
 		return nil
-	case parser.StmtTypeExpr:
-		return s.Add(wrapInPrint(code))
 	case parser.StmtEmpty:
 		return nil
 	default:
@@ -212,6 +223,12 @@ func (s *Session) writeToFile() error {
 }
 
 func (s *Session) removeLastCode() {
+	idx := len(s.code) - 1
+	for tmpIdx, t := range s.tmpCodes {
+		if t == idx {
+			s.tmpCodes = append(s.tmpCodes[:tmpIdx], s.tmpCodes[tmpIdx+1:]...)
+		}
+	}
 	s.code = s.code[:len(s.code)-1]
 }
 func getModuleNameOfCurrentProject(workingDirectory string) string {
@@ -245,7 +262,7 @@ func (s *Session) Eval() string {
 	if s.shellCmdOutput != "" {
 		output := s.shellCmdOutput
 		s.shellCmdOutput = ""
-		return output
+		return output + "\n"
 	}
 	if len(s.code) == 0 {
 		return ""
@@ -264,7 +281,7 @@ func (s *Session) Eval() string {
 	cmdImport := exec.Command("goimports", "-w", "main.go")
 	out, err := cmdImport.CombinedOutput()
 	if err != nil {
-		return fmt.Sprintf("%s %s", string(out), err.Error())
+		return fmt.Sprintf("%s %s\n", string(out), err.Error())
 	}
 	cmdRun := exec.Command("/bin/sh", "-c", "go build -o repl_session; ./repl_session")
 	out, err = cmdRun.CombinedOutput()
@@ -273,7 +290,7 @@ func (s *Session) Eval() string {
 			return "Note you are not using something that you define or import"
 		} else {
 			s.removeLastCode()
-			return fmt.Sprintf("%s %s", string(out), err.Error())
+			return fmt.Sprintf("%s %s\n", string(out), err.Error())
 		}
 	}
 	return fmt.Sprintf("%s", out)
