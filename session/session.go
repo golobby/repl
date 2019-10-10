@@ -66,6 +66,8 @@ func (s *Session) handleShellCommands(code string) error {
 	case parser.REPLCmdHelp:
 		s.shellCmdOutput = helpText
 		return nil
+	case parser.REPLCmdTypeVal:
+		return s.Add(wrapInPrint(data))
 	default:
 		return nil
 	}
