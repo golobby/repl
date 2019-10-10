@@ -110,18 +110,7 @@ func Test_add_isImport(t *testing.T) {
 func Test_add_function_call(t *testing.T) {
 	s := &Session{}
 	s.Add(`someFunc("salam man be to yare ghadimi")`)
-	assert.Equal(t, s.code, []string{wrapInPrint(`someFunc("salam man be to yare ghadimi")`)})
-}
-func Test_add_expr(t *testing.T) {
-	s := &Session{}
-	s.Add(`fmt.Println`)
-	assert.Equal(t, []string{wrapInPrint(`fmt.Println`)}, s.code)
-	s.Add(`"salam"`)
-	assert.Equal(t, []string{wrapInPrint(`"salam"`)}, s.code)
-	s.Add(`23`)
-	assert.Equal(t, []string{wrapInPrint(`23`)}, s.code)
-	s.Add(`a*(2+3)`)
-	assert.Equal(t, []string{wrapInPrint(`a*(2+3)`)}, s.code)
+	assert.Equal(t, s.code, []string{`someFunc("salam man be to yare ghadimi")`})
 }
 func Test_add_continue_mode(t *testing.T) {
 	s := &Session{}
