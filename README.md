@@ -43,6 +43,14 @@ REPL does not suppress any error message so you can see exact error message from
 REPL build from ground up to be compatible with go modules, so when you fire up a REPL in go project which is a go module project
 REPL instantly identifies your module and imports it as a module with local path, so you can access all your public types and functions.
 
+### Shell Commands
+
+#### Go Doc
+go doc is available as a shell command so you can access any document about any package with REPL.
+```go
+:doc fmt
+:doc json.Marshal
+```
 
 ## Demo
 [![asciicast](https://asciinema.org/a/272640.svg)](https://asciinema.org/a/272640)
