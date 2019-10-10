@@ -22,22 +22,21 @@ func ParseCmd(code string) (REPLCmd, string) {
 }
 
 func isHelp(code string) bool {
-	if len(code) == 0 {
+	if len(code) < len(":help") {
 		return false
 	}
 	seg := code[:5]
 	return seg == ":help"
 }
 func isTypeVal(code string) bool {
-	if len(code) == 0 {
+	if len(code) < len(":e a") {
 		return false
 	}
-	//:typeval
-	return code[:8] == ":typeval"
+	return code[:2] == ":e"
 }
 
 func isGoDoc(code string) bool {
-	if len(code) == 0 {
+	if len(code) < len(":doc a") {
 		return false
 	}
 	seg := code[:4]

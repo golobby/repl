@@ -28,6 +28,7 @@ const helpText = `
 List of REPL commands:
 	:help => shows help
 	:doc => shows go documentation of package/function
+	:e => evaluates expression
 `
 const moduleTemplate = `module shell
 

@@ -32,6 +32,11 @@ func completer(d prompt.Document) []prompt.Suggest {
 }
 
 func handler(input string) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("Panic: %v\n", err)
+		}
+	}()
 	var start time.Time
 	if DEBUG {
 		start = time.Now()
