@@ -38,7 +38,8 @@ func handler(input string) {
 	}
 	err := currentSession.Add(input)
 	if err != nil {
-		panic(err)
+		fmt.Print(err.Error())
+		return
 	}
 
 	fmt.Print(currentSession.Eval())

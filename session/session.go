@@ -48,20 +48,19 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
-func (s *Session) handleShellCommands(code string) {
+func (s *Session) handleShellCommands(code string) error {
 	typ, data := parser.ParseCmd(code)
 	switch typ {
 	case parser.REPLCmdDoc:
 		output, err := goDoc(data)
 		if err != nil {
-			s.shellCmdOutput = err.Error()
-			return
+			return err
 		}
 		s.shellCmdOutput = string(output)
 	default:
-		return
+		return nil
 	}
-	return
+	return nil
 }
 func (s *Session) addCode(t parser.StmtType, code string) error {
 	if s.continueMode {
@@ -86,8 +85,7 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 	}
 	switch t {
 	case parser.StmtShell:
-		s.handleShellCommands(code)
-		return nil
+		return s.handleShellCommands(code)
 	case parser.StmtTypeImport:
 		s.addImport(code)
 		return nil
