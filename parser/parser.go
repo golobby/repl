@@ -17,11 +17,14 @@ const (
 	StmtTypeFuncDecl
 	StmtUnknown
 	StmtEmpty
+	StmtShell
 )
 
 func Parse(code string) (StmtType, error) {
 	if isEmpty(code) {
 		return StmtEmpty, nil
+	} else if isShellCommand(code) {
+		return StmtShell, nil
 	} else if isComment(code) {
 		return StmtTypeComment, nil
 	} else if isImport(code) {
