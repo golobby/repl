@@ -73,6 +73,7 @@ func Test_removeTmpCodes(t *testing.T) {
 }
 func Test_validGoFileFromSession(t *testing.T) {
 	s := &Session{}
+	s.vars = map[string]Var{}
 	s.addImport(`import "fmt"`)
 	s.Add(`fmt.Println("hey")`)
 	s.Add(`var a int`)
