@@ -105,8 +105,6 @@ func (s *Session) addCode(t StmtType, code string) error {
 	case StmtTypeImport:
 		s.addImport(code)
 		return nil
-	case StmtTypeComment:
-		return nil
 	case StmtTypePrint:
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)

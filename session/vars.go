@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -23,4 +24,24 @@ func (s *Session) varsString() string {
 		sets = append(sets, fmt.Sprintf("%s => %s", k, v))
 	}
 	return strings.Join(sets, "\n")
+}
+
+func ExtractNameAndValueFromVarInit(code string) (string, string) {
+	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*\s*:?=(?P<value>.+)`)
+	matched, err := reSubMatchMap(regex, code)
+	if err != nil {
+		return "", ""
+	}
+	varname, _ := matched["varname"]
+	value, _ := matched["value"]
+	return varname, value
+}
+
+func IsVarDecl(code string) bool {
+	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*\s*:?=(?P<value>.+)`)
+	matched, err := reSubMatchMap(regex, code)
+	if err != nil {
+		return false
+	}
+	return !(len(matched) == 0)
 }

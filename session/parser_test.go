@@ -11,9 +11,6 @@ func TestParse(t *testing.T) {
 	typ, err := Parse(``)
 	assert.NoError(t, err)
 	assert.Equal(t, StmtEmpty, typ)
-	typ, err = Parse(`// salam`)
-	assert.NoError(t, err)
-	assert.Equal(t, StmtTypeComment, typ)
 	typ, err = Parse(`import "fmt"`)
 	assert.NoError(t, err)
 	assert.Equal(t, StmtTypeImport, typ)
@@ -108,22 +105,4 @@ func Test_reSubMatch(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, matched["args"], "somearg string")
 	assert.Equal(t, matched["returns"], "string, error")
-}
-func Test_isFuncCall(t *testing.T) {
-	assert.True(t, isFunctionCall("json.Marshal()"))
-	assert.True(t, isFunctionCall("println()"))
-
-	assert.False(t, isFunctionCall("2*3(1+2)"))
-}
-func Test_has_output(t *testing.T) {
-	assert.True(t, hasOutput(`x := 2`))
-	assert.False(t, hasOutput(`x == 2`))
-}
-
-func Test_isComment(t *testing.T) {
-	assert.False(t, isComment(""))
-	assert.True(t, isComment("// salam"))
-	assert.True(t, isComment("/* salam */"))
-	assert.True(t, isComment(`//fmt.Println("Hello")`))
-	assert.False(t, isComment(`fmt.Println("Hello")`))
 }

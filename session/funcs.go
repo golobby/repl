@@ -2,11 +2,31 @@ package session
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
 func (s *Session) addFunc(name string, value string) {
 	s.funcs[name] = value
+}
+
+func IsFunc(code string) bool {
+	matched, err := regexp.Match("^func.+", []byte(code))
+	if err != nil {
+		return false
+	}
+	return matched
+}
+
+func ExtractFuncName(code string) string {
+	matched, err := reSubMatchMap(regexp.MustCompile(`func\s+(\(.*\))?\s*(?P<funcname>[a-zA-Z0-9]+)\(.*\).*`), code)
+	if err != nil {
+		return ""
+	}
+	if name, ok := matched["funcname"]; ok {
+		return name
+	}
+	return ""
 }
 
 func (s *Session) funcsForSource() string {
