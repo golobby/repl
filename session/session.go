@@ -17,7 +17,7 @@ type Session struct {
 	imports        []string
 	types          map[string]string
 	funcs          map[string]string
-	vars           map[string]string
+	vars           Vars
 	tmpCodes       []int
 	code           []string
 	sessionDir     string
@@ -32,7 +32,8 @@ List of REPL commands:
 :doc => shows go documentation of package/function
 :e => evaluates expression
 :pop => pop latest code from session
-:dump => shows all codes in the session
+:dump => dumps current session
+:file => prints go file generated from session
 `
 const moduleTemplate = `module shell
 
@@ -56,26 +57,6 @@ func (s *Session) appendToLastCode(code string) {
 	}
 	s.code[len(s.code)-1] += "\n" + code
 	return
-}
-
-const outputTemplte = `imports => [
-	%s
-],
-types => [
-	%s
-],
-funcs => [
-	%s
-],
-vars => [
-	%s
-],
-main => [
-	%s
-]`
-
-func (s *Session) dump() string {
-	return fmt.Sprintf(outputTemplte, strings.Join(s.imports, "\n"), s.typesAsString(), s.funcsAsString(), s.varsString(), strings.Join(s.code, "\n"))
 }
 
 func (s *Session) addCode(t StmtType, code string) error {
@@ -116,8 +97,7 @@ func (s *Session) addCode(t StmtType, code string) error {
 		s.addFunc(ExtractFuncName(code), code)
 		return nil
 	case StmtVarDecl:
-		varName, value := ExtractNameAndValueFromVarInit(code)
-		s.addVar(varName, value)
+		s.addVar(NewVar(code))
 		return nil
 	case StmtEmpty:
 		return nil
@@ -171,7 +151,7 @@ func NewSession(workingDirectory string) (*Session, error) {
 		imports:        []string{},
 		types:          map[string]string{},
 		funcs:          map[string]string{},
-		vars:           map[string]string{},
+		vars:           []Var{},
 		tmpCodes:       []int{},
 		code:           []string{},
 		sessionDir:     sessionDir,
@@ -197,19 +177,11 @@ func NewSession(workingDirectory string) (*Session, error) {
 	}
 	return session, nil
 }
-func createReplaceRequireClause(moduleName, localPath string) string {
-	if moduleName == "" {
-		return ""
-	}
-	return fmt.Sprintf(`replace %s => %s`, moduleName, localPath)
-}
+
 func (s *Session) removeTmpDir() error {
 	return os.RemoveAll(s.sessionDir)
 }
 
-func (s *Session) createModule(wd string, moduleName string) error {
-	return ioutil.WriteFile("go.mod", []byte(fmt.Sprintf(moduleTemplate, createReplaceRequireClause(moduleName, wd))), 500)
-}
 func (s *Session) writeToFile() error {
 	return ioutil.WriteFile(s.sessionDir+"/main.go", []byte(s.String()), 500)
 }
@@ -227,9 +199,7 @@ func (s *Session) removeLastCode() {
 func checkIfErrIsNotDecl(err string) bool {
 	return strings.Contains(err, "not used") && !strings.Contains(err, "evaluated")
 }
-func multiplyString(s string, n int) string {
-	return strings.Repeat(s, n)
-}
+
 func checkIfHasParsingError(code string) error {
 	fs := token.NewFileSet()
 	_, err := p.ParseFile(fs, "", code, p.AllErrors)
@@ -249,7 +219,7 @@ func (s *Session) Eval() string {
 		return ""
 	}
 	if s.continueMode {
-		return multiplyString("...", s.indents)
+		return strings.Repeat("...", s.indents)
 	}
 	if err := checkIfHasParsingError(s.String()); err != nil {
 		s.removeLastCode()
@@ -283,5 +253,5 @@ func (s *Session) Eval() string {
 
 func (s *Session) String() string {
 	code := "package main\n%s\n%s\n%s\n%s\nfunc main() {\n%s\n}"
-	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), s.typesForSource(), s.funcsForSource(), s.varsForSource(), strings.Join(s.code, "\n"))
+	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), s.typesForSource(), s.funcsForSource(), "var(\n"+s.vars.String()+"\n)", strings.Join(s.code, "\n"))
 }

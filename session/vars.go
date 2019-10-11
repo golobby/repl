@@ -6,42 +6,60 @@ import (
 	"strings"
 )
 
-func (s *Session) addVar(name string, value string) {
-	s.vars[name] = value
+type Var struct {
+	Name  string
+	Type  string
+	Value string
 }
+type Vars []Var
 
-func (s *Session) varsForSource() string {
-	var sets []string
-	for k, v := range s.vars {
-		sets = append(sets, fmt.Sprintf("%s = %s", k, v))
+func (v Var) String() string {
+	if v.Value != "" {
+		return fmt.Sprintf("%s %s = %s", v.Name, v.Type, v.Value)
 	}
-	return "var (\n" + strings.Join(sets, "\n") + ")"
+	return fmt.Sprintf("%s %s", v.Name, v.Type)
 }
 
-func (s *Session) varsString() string {
+func (s *Session) addVar(v Var) {
+	s.vars = append(s.vars, v)
+}
+
+func (vs Vars) String() string {
 	var sets []string
-	for k, v := range s.vars {
-		sets = append(sets, fmt.Sprintf("%s => %s", k, v))
+	for _, v := range vs {
+		sets = append(sets, v.String())
 	}
-	return strings.Join(sets, "\n")
+	return strings.Join(sets, "\n\t")
 }
 
-func ExtractNameAndValueFromVarInit(code string) (string, string) {
-	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*\s*:?=(?P<value>.+)`)
+func NewVar(code string) Var {
+	if strings.Contains(code, "=") {
+		regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*(?P<type>[a-zA-Z0-9_]+)?\s*:?=(?P<value>.+)`)
+		matched, err := reSubMatchMap(regex, code)
+		if err != nil {
+			return Var{}
+		}
+		varname, _ := matched["varname"]
+		value, _ := matched["value"]
+		typ, _ := matched["type"]
+		return Var{
+			varname, typ, value,
+		}
+	}
+	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*(?P<type>.+)`)
 	matched, err := reSubMatchMap(regex, code)
 	if err != nil {
-		return "", ""
+		return Var{}
 	}
 	varname, _ := matched["varname"]
-	value, _ := matched["value"]
-	return varname, value
+	typ, _ := matched["type"]
+	return Var{varname, typ, ""}
 }
 
 func IsVarDecl(code string) bool {
-	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*\s*:?=(?P<value>.+)`)
-	matched, err := reSubMatchMap(regex, code)
+	matched, err := regexp.Match(`(var)?\s*([a-zA-Z0-9_]+).*`, []byte(code))
 	if err != nil {
 		return false
 	}
-	return !(len(matched) == 0)
+	return matched
 }

@@ -59,7 +59,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	debug := flag.Bool("timestamp", false, "turns timestamp mode on")
 	flag.Parse()
 	DEBUG = *debug

@@ -10,6 +10,7 @@ const (
 	REPLCmdTypeVal
 	REPLCmdPop
 	REPLCmdDump
+	REPLCmdFile
 )
 
 func isShellCommand(code string) bool {
@@ -40,6 +41,9 @@ func (s *Session) handleShellCommands(code string) error {
 	case REPLCmdDump:
 		s.shellCmdOutput = s.dump()
 		return nil
+	case REPLCmdFile:
+		s.shellCmdOutput = s.String()
+		return nil
 	default:
 		return nil
 	}
@@ -58,6 +62,8 @@ func ParseCmd(code string) (REPLCmd, string) {
 			return REPLCmdPop, strings.Split(code, " ")[1]
 		}
 		return REPLCmdPop, ""
+	} else if isFile(code) {
+		return REPLCmdFile, ""
 	} else if isDump(code) {
 		return REPLCmdDump, ""
 	}
@@ -96,4 +102,11 @@ func isGoDoc(code string) bool {
 	}
 	seg := code[:4]
 	return seg == ":doc"
+}
+
+func isFile(code string) bool {
+	if len(code) < len(":file") {
+		return false
+	}
+	return code[:5] == ":file"
 }

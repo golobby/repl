@@ -1,7 +1,6 @@
 package session
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -18,20 +17,12 @@ func isTypeDecl(code string) bool {
 	return matched
 }
 
-func (s *Session) typesAsString() string {
-	var types []string
-	for k, v := range s.types {
-		types = append(types, fmt.Sprintf("%s => %s", k, v))
-	}
-	return strings.Join(types, "\n")
-}
-
 func (s *Session) typesForSource() string {
 	var ts []string
 	for _, v := range s.types {
 		ts = append(ts, v)
 	}
-	return strings.Join(ts, "\n")
+	return strings.Join(ts, "\n\t")
 }
 
 func ExtractTypeName(code string) string {
