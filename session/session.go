@@ -2,21 +2,22 @@ package session
 
 import (
 	"fmt"
+	"github.com/golobby/repl/parser"
+	p "go/parser"
+	"go/token"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
-
-	"github.com/golobby/repl/parser"
 )
 
 type Session struct {
 	shellCmdOutput  string
 	imports         []string
 	typesAndMethods []string
-	vars            []string
+	vars            map[string]string
 	tmpCodes        []int
 	code            []string
 	sessionDir      string
@@ -85,6 +86,18 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
+const outputTemplte = "typesAndMethods(\n%s\n)\nimport(\n%s\n)\nvar(\n%s\n)\nmain(\n%s\n)"
+
+func (s *Session) logOUtput() string {
+	return fmt.Sprintf(outputTemplte, strings.Join(s.typesAndMethods, "\n"), strings.Join(s.imports, "\n"), s.varsString(), strings.Join(s.code, "\n"))
+}
+func (s *Session) varsString() string {
+	var sets []string
+	for k, v := range s.vars {
+		sets = append(sets, fmt.Sprintf("%s => %s", k, v))
+	}
+	return strings.Join(sets, "\n")
+}
 func (s *Session) handleShellCommands(code string) error {
 	typ, data := parser.ParseCmd(code)
 	switch typ {
@@ -104,14 +117,15 @@ func (s *Session) handleShellCommands(code string) error {
 		s.code = s.code[:len(s.code)-1]
 		return nil
 	case parser.REPLCmdLog:
-		allcodes := append(s.imports, s.typesAndMethods...)
-		allcodes = append(allcodes, s.code...)
-		s.shellCmdOutput = strings.Join(allcodes, "\n")
+		s.shellCmdOutput = s.logOUtput()
 		return nil
 	default:
 		return nil
 	}
 	return nil
+}
+func (s *Session) addVar(name string, value string) {
+	s.vars[name] = value
 }
 func (s *Session) addCode(t parser.StmtType, code string) error {
 	if s.continueMode {
@@ -155,9 +169,8 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		}
 		return nil
 	case parser.StmtVarDecl:
-		if !s.ifVarIsAlreadyDeclReplace(code) {
-			s.vars = append(s.vars, code)
-		}
+		varName, value := parser.ExtractNameAndValueFromVarInit(code)
+		s.addVar(varName, value)
 		return nil
 	case parser.StmtEmpty:
 		return nil
@@ -218,10 +231,16 @@ func NewSession(workingDirectory string) (*Session, error) {
 		panic(err)
 	}
 	session := &Session{
-		imports:    []string{},
-		tmpCodes:   []int{},
-		code:       []string{},
-		sessionDir: sessionDir,
+		shellCmdOutput:  "",
+		imports:         []string{},
+		typesAndMethods: nil,
+		vars:            map[string]string{},
+		tmpCodes:        []int{},
+		code:            []string{},
+		sessionDir:      sessionDir,
+		Writer:          nil,
+		continueMode:    false,
+		indents:         0,
 	}
 	currentModule := getModuleNameOfCurrentProject(workingDirectory)
 	if err = session.createModule(workingDirectory, currentModule); err != nil {
@@ -286,6 +305,14 @@ func checkIfErrIsNotDecl(err string) bool {
 func multiplyString(s string, n int) string {
 	return strings.Repeat(s, n)
 }
+func checkIfHasParsingError(code string) error {
+	fs := token.NewFileSet()
+	_, err := p.ParseFile(fs, "", code, p.AllErrors)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (s *Session) Eval() string {
 	if s.shellCmdOutput != "" {
@@ -298,6 +325,10 @@ func (s *Session) Eval() string {
 	}
 	if s.continueMode {
 		return multiplyString("...", s.indents)
+	}
+	if err := checkIfHasParsingError(s.validGoFileFromSession()); err != nil {
+		s.removeLastCode()
+		return err.Error()
 	}
 	err := s.writeToFile()
 	if err != nil {
@@ -324,8 +355,15 @@ func (s *Session) Eval() string {
 	}
 	return fmt.Sprintf("%s", out)
 }
+func (s *Session) varsForSource() string {
+	var sets []string
+	for k, v := range s.vars {
+		sets = append(sets, fmt.Sprintf("%s = %s", k, v))
+	}
+	return "var (\n" + strings.Join(sets, "\n") + ")"
+}
 
 func (s *Session) validGoFileFromSession() string {
 	code := "package main\n%s\n%s\n%s\nfunc main() {\n%s\n}"
-	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.typesAndMethods, "\n"), strings.Join(s.vars, "\n"), strings.Join(s.code, "\n"))
+	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.typesAndMethods, "\n"), s.varsForSource(), strings.Join(s.code, "\n"))
 }
