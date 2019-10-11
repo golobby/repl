@@ -143,6 +143,11 @@ func isExpr(code string) bool {
 	}
 	return true
 }
+func ExtractNameAndValueFromVarInit(code string) (string, string) {
+	varName := ExtractVarName(code)
+	value := strings.Split(code, "=")[1]
+	return varName, value
+}
 func IsFunc(code string) bool {
 	matched, err := regexp.Match("^func.+", []byte(code))
 	if err != nil {

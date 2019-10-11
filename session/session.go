@@ -16,6 +16,7 @@ type Session struct {
 	shellCmdOutput  string
 	imports         []string
 	typesAndMethods []string
+	vars            []string
 	tmpCodes        []int
 	code            []string
 	sessionDir      string
@@ -55,11 +56,11 @@ func (s *Session) ifFuncIsAlreadyDeclReplace(code string) bool {
 
 func (s *Session) ifVarIsAlreadyDeclReplace(code string) bool {
 	thisVar := parser.ExtractVarName(code)
-	for idx, c := range s.code {
+	for idx, c := range s.vars {
 		if parser.IsVarDecl(c) {
 			v := parser.ExtractVarName(c)
 			if v == thisVar {
-				s.code[idx] = code
+				s.vars[idx] = code
 				return true
 			}
 		}
@@ -145,14 +146,17 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
 		return nil
-	case parser.StmtTypeFuncDecl, parser.StmtTypeTypeDecl:
+	case parser.StmtTypeTypeDecl:
+		s.typesAndMethods = append(s.typesAndMethods, code)
+		return nil
+	case parser.StmtTypeFuncDecl:
 		if !s.ifFuncIsAlreadyDeclReplace(code) {
 			s.typesAndMethods = append(s.typesAndMethods, code)
 		}
 		return nil
 	case parser.StmtVarDecl:
 		if !s.ifVarIsAlreadyDeclReplace(code) {
-			s.code = append(s.code, code)
+			s.vars = append(s.vars, code)
 		}
 		return nil
 	case parser.StmtEmpty:
@@ -280,14 +284,7 @@ func checkIfErrIsNotDecl(err string) bool {
 	return strings.Contains(err, "not used") && !strings.Contains(err, "evaluated")
 }
 func multiplyString(s string, n int) string {
-	var out string
-	if n == 0 {
-		return ""
-	}
-	for i := 0; i < n; i++ {
-		out += s
-	}
-	return out
+	return strings.Repeat(s, n)
 }
 
 func (s *Session) Eval() string {
@@ -329,6 +326,6 @@ func (s *Session) Eval() string {
 }
 
 func (s *Session) validGoFileFromSession() string {
-	code := "package main\n%s\n%s\nfunc main() {\n%s\n}"
-	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.typesAndMethods, "\n"), strings.Join(s.code, "\n"))
+	code := "package main\n%s\n%s\n%s\nfunc main() {\n%s\n}"
+	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.typesAndMethods, "\n"), strings.Join(s.vars, "\n"), strings.Join(s.code, "\n"))
 }
