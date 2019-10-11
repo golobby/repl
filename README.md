@@ -43,6 +43,16 @@ REPL does not suppress any error message so you can see exact error message from
 REPL build from ground up to be compatible with go modules, so when you fire up a REPL in go project which is a go module project
 REPL instantly identifies your module and imports it as a module with local path, so you can access all your public types and functions.
 
+### Variable/Function Redeclaration
+As you know Go does not allow for re declaration of variables or functions but REPL allows you 
+to re declare vars/funcs easily.
+```go
+x:=3
+:e x //<int> 3
+x:=5
+:e x // <int> 5
+```
+
 ### Shell Commands
 
 #### Go Doc
