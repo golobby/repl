@@ -39,6 +39,34 @@ go 1.13
 %s
 `
 
+func (s *Session) ifFuncIsAlreadyDeclReplace(code string) bool {
+	thisFunc := parser.ExtractFuncName(code)
+	for idx, c := range s.typesAndMethods {
+		if parser.IsFunc(c) {
+			v := parser.ExtractFuncName(c)
+			if v == thisFunc {
+				s.typesAndMethods[idx] = code
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (s *Session) ifVarIsAlreadyDeclReplace(code string) bool {
+	thisVar := parser.ExtractVarName(code)
+	for idx, c := range s.code {
+		if parser.IsVarDecl(c) {
+			v := parser.ExtractVarName(c)
+			if v == thisVar {
+				s.code[idx] = code
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func wrapInPrint(code string) string {
 	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
 }
@@ -119,6 +147,11 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		return nil
 	case parser.StmtTypeFuncDecl, parser.StmtTypeTypeDecl:
 		s.typesAndMethods = append(s.typesAndMethods, code)
+		return nil
+	case parser.StmtVarDecl:
+		if !s.ifVarIsAlreadyDeclReplace(code) {
+			s.code = append(s.code, code)
+		}
 		return nil
 	case parser.StmtEmpty:
 		return nil

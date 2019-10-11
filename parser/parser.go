@@ -18,6 +18,7 @@ const (
 	StmtUnknown
 	StmtEmpty
 	StmtShell
+	StmtVarDecl
 )
 
 func Parse(code string) (StmtType, error) {
@@ -29,14 +30,14 @@ func Parse(code string) (StmtType, error) {
 		return StmtTypeComment, nil
 	} else if isImport(code) {
 		return StmtTypeImport, nil
-	} else if isFunc(code) {
+	} else if IsFunc(code) {
 		return StmtTypeFuncDecl, nil
 	} else if isTypeDecl(code) {
 		return StmtTypeTypeDecl, nil
 	} else if isPrint(code) {
 		return StmtTypePrint, nil
-	} else if isExpr(code) {
-		return StmtTypeExpr, nil
+	} else if IsVarDecl(code) {
+		return StmtVarDecl, nil
 	} else {
 		return StmtUnknown, nil
 	}
@@ -98,16 +99,31 @@ func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
 
 	return subMatchMap
 }
-func isVarDecl(code string) bool {
-	matched1, err := regexp.Match(`(var)?\s*.+\s+:?=\s*[a-zA-Z0-9_.-]+\(.*\)`, []byte(code))
+func ExtractVarName(code string) string {
+	regex := regexp.MustCompile(`(var)?\s+(?P<varname>[a-zA-Z0-9_]+)\s*.*(:?=.+)?`)
+	matched := reSubMatchMap(regex, code)
+	if name, ok := matched["varname"]; ok {
+		return name
+	}
+	return ""
+}
+func ExtractFuncName(code string) string {
+	matched := reSubMatchMap(regexp.MustCompile(`func\s+(\(.*\))(?P<funcname>.+)\(.*\).*`), code)
+	if name, ok := matched["funcname"]; ok {
+		return name
+	}
+	return ""
+}
+func IsVarDecl(code string) bool {
+	matched1, err := regexp.Match(`(var)?\s*[a-zA-Z0-9]+\s+:?=\s*[a-zA-Z0-9_.-]+\(.*\)`, []byte(code))
 	if err != nil {
 		return false
 	}
-	matched2, err := regexp.Match(`var\s+.+\s+.+`, []byte(code))
+	matched2, err := regexp.Match(`var\s+[a-zA-Z0-9]+\s+.+`, []byte(code))
 	if err != nil {
 		return false
 	}
-	matched3, err := regexp.Match(`(var)?\s*.+\s?:?=\s*.+`, []byte(code))
+	matched3, err := regexp.Match(`(var)?\s*[a-zA-Z0-9]+\s?:?=\s*.+`, []byte(code))
 	if err != nil {
 		return false
 	}
@@ -122,12 +138,12 @@ func isFunctionCall(code string) bool {
 }
 
 func isExpr(code string) bool {
-	if isVarDecl(code) || (isFunctionCall(code) && hasOutput(code)) {
+	if IsVarDecl(code) || (isFunctionCall(code) && hasOutput(code)) {
 		return false
 	}
 	return true
 }
-func isFunc(code string) bool {
+func IsFunc(code string) bool {
 	matched, err := regexp.Match("^func.+", []byte(code))
 	if err != nil {
 		return false

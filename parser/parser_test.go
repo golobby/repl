@@ -28,7 +28,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, StmtTypePrint, typ)
 	typ, err = Parse(`fmt.Println`)
 	assert.NoError(t, err)
-	assert.Equal(t, StmtTypeExpr, typ)
+	assert.Equal(t, StmtUnknown, typ)
 }
 func Test_shouldContinue(t *testing.T) {
 
@@ -61,14 +61,14 @@ func Test_isFunc_true(t *testing.T) {
 	code := `func (User) Name() string{
 		return u.name
 }`
-	assert.True(t, isFunc(code))
+	assert.True(t, IsFunc(code))
 }
 
 func Test_isFunc_false(t *testing.T) {
 	code := `unc (User) Name string{
 		return u.name
 }`
-	assert.False(t, isFunc(code))
+	assert.False(t, IsFunc(code))
 }
 
 func Test_isTypeDecl_true(t *testing.T) {
