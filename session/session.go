@@ -242,7 +242,7 @@ func getModuleNameOfCurrentProject(workingDirectory string) string {
 }
 
 func checkIfErrIsNotDecl(err string) bool {
-	return strings.Contains(err, "not used")
+	return strings.Contains(err, "not used") && !strings.Contains(err, "evaluated")
 }
 func multiplyString(s string, n int) string {
 	var out string
@@ -280,11 +280,11 @@ func (s *Session) Eval() string {
 	if err != nil {
 		return fmt.Sprintf("%s %s\n", string(out), err.Error())
 	}
-	cmdRun := exec.Command("/bin/sh", "-c", "go build -o repl_session; ./repl_session")
+	cmdRun := exec.Command("go", "run", "main.go")
 	out, err = cmdRun.CombinedOutput()
 	if err != nil {
 		if checkIfErrIsNotDecl(string(out)) {
-			return "Note you are not using something that you define or import"
+			return fmt.Sprintf("%s %s\n", string(out), err.Error())
 		} else {
 			s.removeLastCode()
 			return fmt.Sprintf("%s %s\n", string(out), err.Error())
