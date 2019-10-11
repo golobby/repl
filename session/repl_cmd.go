@@ -1,4 +1,4 @@
-package parser
+package session
 
 import "strings"
 
@@ -9,7 +9,7 @@ const (
 	REPLCmdHelp
 	REPLCmdTypeVal
 	REPLCmdPop
-	REPLCmdLog
+	REPLCmdDump
 )
 
 func ParseCmd(code string) (REPLCmd, string) {
@@ -24,8 +24,8 @@ func ParseCmd(code string) (REPLCmd, string) {
 			return REPLCmdPop, strings.Split(code, " ")[1]
 		}
 		return REPLCmdPop, ""
-	} else if isLog(code) {
-		return REPLCmdLog, ""
+	} else if isDump(code) {
+		return REPLCmdDump, ""
 	}
 	return 0, ""
 }
@@ -36,11 +36,11 @@ func isPop(code string) bool {
 	}
 	return code[:4] == ":pop"
 }
-func isLog(code string) bool {
-	if len(code) < len(":log") {
+func isDump(code string) bool {
+	if len(code) < len(":dump") {
 		return false
 	}
-	return code[:4] == ":log"
+	return code[:5] == ":dump"
 }
 func isHelp(code string) bool {
 	if len(code) < len(":help") {
