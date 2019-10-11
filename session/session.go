@@ -26,11 +26,11 @@ type Session struct {
 
 const helpText = `
 List of REPL commands:
-	:help => shows help
-	:doc => shows go documentation of package/function
-	:e => evaluates expression
-	:pop => pop latest code from session
-	:log => shows all codes in the session
+:help => shows help
+:doc => shows go documentation of package/function
+:e => evaluates expression
+:pop => pop latest code from session
+:log => shows all codes in the session
 `
 const moduleTemplate = `module shell
 
@@ -146,7 +146,9 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
 		return nil
 	case parser.StmtTypeFuncDecl, parser.StmtTypeTypeDecl:
-		s.typesAndMethods = append(s.typesAndMethods, code)
+		if !s.ifFuncIsAlreadyDeclReplace(code) {
+			s.typesAndMethods = append(s.typesAndMethods, code)
+		}
 		return nil
 	case parser.StmtVarDecl:
 		if !s.ifVarIsAlreadyDeclReplace(code) {

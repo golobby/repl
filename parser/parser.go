@@ -100,7 +100,7 @@ func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
 	return subMatchMap
 }
 func ExtractVarName(code string) string {
-	regex := regexp.MustCompile(`(var)?\s+(?P<varname>[a-zA-Z0-9_]+)\s*.*(:?=.+)?`)
+	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*(:?=.+)?`)
 	matched := reSubMatchMap(regex, code)
 	if name, ok := matched["varname"]; ok {
 		return name
@@ -108,7 +108,7 @@ func ExtractVarName(code string) string {
 	return ""
 }
 func ExtractFuncName(code string) string {
-	matched := reSubMatchMap(regexp.MustCompile(`func\s+(\(.*\))(?P<funcname>.+)\(.*\).*`), code)
+	matched := reSubMatchMap(regexp.MustCompile(`func\s+(\(.*\))?\s*(?P<funcname>[a-zA-Z0-9]+)\(.*\).*`), code)
 	if name, ok := matched["funcname"]; ok {
 		return name
 	}
