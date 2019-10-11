@@ -125,13 +125,6 @@ func Test_wrapInPrint(t *testing.T) {
 	assert.Equal(t, `fmt.Printf("<%T> %+v\n", "Hello", "Hello")`, wrapInPrint(`"Hello"`))
 
 }
-func Test_multiplyString(t *testing.T) {
-	assert.Equal(t, "", multiplyString("...", 0))
-	assert.Equal(t, "...", multiplyString("...", 1))
-	assert.Equal(t, "......", multiplyString("...", 2))
-	assert.Equal(t, ".........", multiplyString("...", 3))
-
-}
 
 func Test_getModuleNameOfCurrentProject_in_go_project(t *testing.T) {
 	monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
