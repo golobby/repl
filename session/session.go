@@ -58,21 +58,21 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
-const outputTemplte = `import(
-%s
-)
-types(
-%s
-)
-funcs(
-%s
-)
-var(
-%s
-)
-main(
-%s
-)`
+const outputTemplte = `imports => [
+	%s
+],
+types => [
+	%s
+],
+funcs => [
+	%s
+],
+vars => [
+	%s
+],
+main => [
+	%s
+]`
 
 func (s *Session) dump() string {
 	return fmt.Sprintf(outputTemplte, strings.Join(s.imports, "\n"), s.typesAsString(), s.funcsAsString(), s.varsString(), strings.Join(s.code, "\n"))
@@ -222,18 +222,6 @@ func (s *Session) removeLastCode() {
 		}
 	}
 	s.code = s.code[:len(s.code)-1]
-}
-func getModuleNameOfCurrentProject(workingDirectory string) string {
-	bs, err := ioutil.ReadFile(workingDirectory + "/go.mod")
-	if err != nil {
-		if os.IsNotExist(err) {
-			return ""
-		}
-		panic(err)
-	}
-	gomod := string(bs)
-	moduleName := strings.Split(strings.Split(gomod, "\n")[0], " ")[1]
-	return moduleName
 }
 
 func checkIfErrIsNotDecl(err string) bool {
