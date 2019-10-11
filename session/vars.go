@@ -34,12 +34,12 @@ func (vs Vars) String() string {
 
 func NewVar(code string) Var {
 	if strings.Contains(code, "=") {
-		regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*(?P<type>[a-zA-Z0-9_]+)?\s*:?=(?P<value>.+)`)
+		regex := regexp.MustCompile(`(var)?\s*(?P<varnames>[a-zA-Z0-9_,\s]+)\s*(?P<type>[a-zA-Z0-9_]+)?\s*:?=(?P<value>.+)`)
 		matched, err := reSubMatchMap(regex, code)
 		if err != nil {
 			return Var{}
 		}
-		varname, _ := matched["varname"]
+		varname, _ := matched["varnames"]
 		value, _ := matched["value"]
 		typ, _ := matched["type"]
 		return Var{

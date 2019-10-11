@@ -3,6 +3,7 @@ package session
 import (
 	"errors"
 	"regexp"
+	"strings"
 )
 
 type StmtType uint8
@@ -16,6 +17,7 @@ const (
 	StmtEmpty
 	StmtShell
 	StmtVarDecl
+	StmtFunctionCall
 )
 
 func Parse(code string) (StmtType, error) {
@@ -31,11 +33,21 @@ func Parse(code string) (StmtType, error) {
 		return StmtTypeTypeDecl, nil
 	} else if isPrint(code) {
 		return StmtTypePrint, nil
+	} else if isFunctionCall(code) {
+		return StmtFunctionCall, nil
 	} else if IsVarDecl(code) {
 		return StmtVarDecl, nil
 	} else {
 		return StmtUnknown, nil
 	}
+}
+func isFunctionCall(code string) bool {
+	m, err := regexp.Match("^[a-zA-Z0-9_.-]+\\(.*\\)", []byte(code))
+	if err != nil {
+		return false
+	}
+	return m && strings.ContainsAny(code, "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
+
 }
 
 func ShouldContinue(code string) (int, bool) {
