@@ -76,7 +76,7 @@ func Test_validGoFileFromSession(t *testing.T) {
 	s.addImport(`import "fmt"`)
 	s.Add(`fmt.Println("hey")`)
 	s.Add(`var a int`)
-	assert.Equal(t, "package main\nimport \"fmt\"\n\n\nvar (\n)\nfunc main() {\nvar a int\n}", s.String())
+	assert.Equal(t, "package main\nimport \"fmt\"\n\n\nvar(\na int\n)\nfunc main() {\n\n}", s.String())
 }
 
 func Test_add_print(t *testing.T) {

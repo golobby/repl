@@ -11,7 +11,7 @@ type Var struct {
 	Type  string
 	Value string
 }
-type Vars []Var
+type Vars map[string]Var
 
 func (v Var) String() string {
 	if v.Value != "" {
@@ -21,7 +21,7 @@ func (v Var) String() string {
 }
 
 func (s *Session) addVar(v Var) {
-	s.vars = append(s.vars, v)
+	s.vars[strings.TrimSpace(v.Name)] = v
 }
 
 func (vs Vars) String() string {
@@ -57,9 +57,5 @@ func NewVar(code string) Var {
 }
 
 func IsVarDecl(code string) bool {
-	matched, err := regexp.Match(`(var)?\s*([a-zA-Z0-9_]+).*`, []byte(code))
-	if err != nil {
-		return false
-	}
-	return matched
+	return (strings.Contains(code, "=") && !strings.Contains(code, "==")) || strings.Contains(code, "var")
 }

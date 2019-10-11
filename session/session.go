@@ -151,7 +151,7 @@ func NewSession(workingDirectory string) (*Session, error) {
 		imports:        []string{},
 		types:          map[string]string{},
 		funcs:          map[string]string{},
-		vars:           []Var{},
+		vars:           Vars{},
 		tmpCodes:       []int{},
 		code:           []string{},
 		sessionDir:     sessionDir,
