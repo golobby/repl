@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 )
@@ -88,8 +89,11 @@ func isTypeDecl(code string) bool {
 	}
 	return matched
 }
-func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
+func reSubMatchMap(r *regexp.Regexp, str string) (map[string]string, error) {
 	match := r.FindStringSubmatch(str)
+	if len(match) == 0 {
+		return nil, errors.New("cannot match")
+	}
 	subMatchMap := make(map[string]string)
 	for i, name := range r.SubexpNames() {
 		if i != 0 {
@@ -97,18 +101,24 @@ func reSubMatchMap(r *regexp.Regexp, str string) map[string]string {
 		}
 	}
 
-	return subMatchMap
+	return subMatchMap, nil
 }
 func ExtractVarName(code string) string {
 	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*\s*:?=(?P<value>.+)`)
-	matched := reSubMatchMap(regex, code)
+	matched, err := reSubMatchMap(regex, code)
+	if err != nil {
+		return ""
+	}
 	if name, ok := matched["varname"]; ok {
 		return name
 	}
 	return ""
 }
 func ExtractFuncName(code string) string {
-	matched := reSubMatchMap(regexp.MustCompile(`func\s+(\(.*\))?\s*(?P<funcname>[a-zA-Z0-9]+)\(.*\).*`), code)
+	matched, err := reSubMatchMap(regexp.MustCompile(`func\s+(\(.*\))?\s*(?P<funcname>[a-zA-Z0-9]+)\(.*\).*`), code)
+	if err != nil {
+		return ""
+	}
 	if name, ok := matched["funcname"]; ok {
 		return name
 	}
@@ -116,7 +126,10 @@ func ExtractFuncName(code string) string {
 }
 func IsVarDecl(code string) bool {
 	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*\s*:?=(?P<value>.+)`)
-	matched := reSubMatchMap(regex, code)
+	matched, err := reSubMatchMap(regex, code)
+	if err != nil {
+		return false
+	}
 	return !(len(matched) == 0)
 }
 func isFunctionCall(code string) bool {
@@ -127,18 +140,24 @@ func isFunctionCall(code string) bool {
 	return m && strings.ContainsAny(code, "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
 }
 
-func isExpr(code string) bool {
-	if IsVarDecl(code) || (isFunctionCall(code) && hasOutput(code)) {
-		return false
-	}
-	return true
-}
 func ExtractNameAndValueFromVarInit(code string) (string, string) {
 	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*.*\s*:?=(?P<value>.+)`)
-	matched := reSubMatchMap(regex, code)
+	matched, err := reSubMatchMap(regex, code)
+	if err != nil {
+		return "", ""
+	}
 	varname, _ := matched["varname"]
 	value, _ := matched["value"]
 	return varname, value
+}
+func ExtractTypeName(code string) string {
+	regex := regexp.MustCompile(`type\s+(?P<name>[a-zA-Z0-9_]+)(.|\s)+`)
+	matched, err := reSubMatchMap(regex, code)
+	if err != nil {
+		return ""
+	}
+	typeName, _ := matched["name"]
+	return typeName
 }
 func IsFunc(code string) bool {
 	matched, err := regexp.Match("^func.+", []byte(code))

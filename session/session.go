@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"github.com/golobby/repl/parser"
 	p "go/parser"
 	"go/token"
 	"io"
@@ -11,19 +10,22 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/golobby/repl/parser"
 )
 
 type Session struct {
-	shellCmdOutput  string
-	imports         []string
-	typesAndMethods []string
-	vars            map[string]string
-	tmpCodes        []int
-	code            []string
-	sessionDir      string
-	Writer          io.Writer
-	continueMode    bool
-	indents         int
+	shellCmdOutput string
+	imports        []string
+	types          map[string]string
+	funcs          map[string]string
+	vars           map[string]string
+	tmpCodes       []int
+	code           []string
+	sessionDir     string
+	Writer         io.Writer
+	continueMode   bool
+	indents        int
 }
 
 const helpText = `
@@ -41,40 +43,15 @@ go 1.13
 %s
 `
 
-func (s *Session) ifFuncIsAlreadyDeclReplace(code string) bool {
-	thisFunc := parser.ExtractFuncName(code)
-	for idx, c := range s.typesAndMethods {
-		if parser.IsFunc(c) {
-			v := parser.ExtractFuncName(c)
-			if v == thisFunc {
-				s.typesAndMethods[idx] = code
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func (s *Session) ifVarIsAlreadyDeclReplace(code string) bool {
-	thisVar := parser.ExtractVarName(code)
-	for idx, c := range s.vars {
-		if parser.IsVarDecl(c) {
-			v := parser.ExtractVarName(c)
-			if v == thisVar {
-				s.vars[idx] = code
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func wrapInPrint(code string) string {
 	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
 }
 
 func (s *Session) addImport(im string) {
 	s.imports = append(s.imports, im)
+}
+func (s *Session) addType(name string, code string) {
+	s.types[name] = code
 }
 
 func (s *Session) appendToLastCode(code string) {
@@ -86,10 +63,24 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
-const outputTemplte = "typesAndMethods(\n%s\n)\nimport(\n%s\n)\nvar(\n%s\n)\nmain(\n%s\n)"
+const outputTemplte = `import(
+%s
+)
+types(
+%s
+)
+funcs(
+%s
+)
+var(
+%s
+)
+main(
+%s
+)`
 
 func (s *Session) logOUtput() string {
-	return fmt.Sprintf(outputTemplte, strings.Join(s.typesAndMethods, "\n"), strings.Join(s.imports, "\n"), s.varsString(), strings.Join(s.code, "\n"))
+	return fmt.Sprintf(outputTemplte, strings.Join(s.imports, "\n"), s.typesAsString(), s.funcsAsString(), s.varsString(), strings.Join(s.code, "\n"))
 }
 func (s *Session) varsString() string {
 	var sets []string
@@ -97,6 +88,20 @@ func (s *Session) varsString() string {
 		sets = append(sets, fmt.Sprintf("%s => %s", k, v))
 	}
 	return strings.Join(sets, "\n")
+}
+func (s *Session) typesAsString() string {
+	var types []string
+	for k, v := range s.types {
+		types = append(types, fmt.Sprintf("%s => %s", k, v))
+	}
+	return strings.Join(types, "\n")
+}
+func (s *Session) funcsAsString() string {
+	var funcs []string
+	for k, v := range s.funcs {
+		funcs = append(funcs, fmt.Sprintf("%s => %s", k, v))
+	}
+	return strings.Join(funcs, "\n")
 }
 func (s *Session) handleShellCommands(code string) error {
 	typ, data := parser.ParseCmd(code)
@@ -126,6 +131,9 @@ func (s *Session) handleShellCommands(code string) error {
 }
 func (s *Session) addVar(name string, value string) {
 	s.vars[name] = value
+}
+func (s *Session) addFunc(name string, value string) {
+	s.funcs[name] = value
 }
 func (s *Session) addCode(t parser.StmtType, code string) error {
 	if s.continueMode {
@@ -161,12 +169,10 @@ func (s *Session) addCode(t parser.StmtType, code string) error {
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
 		return nil
 	case parser.StmtTypeTypeDecl:
-		s.typesAndMethods = append(s.typesAndMethods, code)
+		s.addType(parser.ExtractTypeName(code), code)
 		return nil
 	case parser.StmtTypeFuncDecl:
-		if !s.ifFuncIsAlreadyDeclReplace(code) {
-			s.typesAndMethods = append(s.typesAndMethods, code)
-		}
+		s.addFunc(parser.ExtractFuncName(code), code)
 		return nil
 	case parser.StmtVarDecl:
 		varName, value := parser.ExtractNameAndValueFromVarInit(code)
@@ -231,16 +237,17 @@ func NewSession(workingDirectory string) (*Session, error) {
 		panic(err)
 	}
 	session := &Session{
-		shellCmdOutput:  "",
-		imports:         []string{},
-		typesAndMethods: nil,
-		vars:            map[string]string{},
-		tmpCodes:        []int{},
-		code:            []string{},
-		sessionDir:      sessionDir,
-		Writer:          nil,
-		continueMode:    false,
-		indents:         0,
+		shellCmdOutput: "",
+		imports:        []string{},
+		types:          map[string]string{},
+		funcs:          map[string]string{},
+		vars:           map[string]string{},
+		tmpCodes:       []int{},
+		code:           []string{},
+		sessionDir:     sessionDir,
+		Writer:         nil,
+		continueMode:   false,
+		indents:        0,
 	}
 	currentModule := getModuleNameOfCurrentProject(workingDirectory)
 	if err = session.createModule(workingDirectory, currentModule); err != nil {
@@ -362,8 +369,21 @@ func (s *Session) varsForSource() string {
 	}
 	return "var (\n" + strings.Join(sets, "\n") + ")"
 }
-
+func (s *Session) typesForSource() string {
+	var ts []string
+	for _, v := range s.types {
+		ts = append(ts, v)
+	}
+	return strings.Join(ts, "\n")
+}
+func (s *Session) funcsForSource() string {
+	var fs []string
+	for _, v := range s.funcs {
+		fs = append(fs, v)
+	}
+	return strings.Join(fs, "\n")
+}
 func (s *Session) validGoFileFromSession() string {
-	code := "package main\n%s\n%s\n%s\nfunc main() {\n%s\n}"
-	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), strings.Join(s.typesAndMethods, "\n"), s.varsForSource(), strings.Join(s.code, "\n"))
+	code := "package main\n%s\n%s\n%s\n%s\nfunc main() {\n%s\n}"
+	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), s.typesForSource(), s.funcsForSource(), s.varsForSource(), strings.Join(s.code, "\n"))
 }

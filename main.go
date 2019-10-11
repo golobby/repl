@@ -4,9 +4,10 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
-	"github.com/golobby/repl/session"
 	"os"
 	"time"
+
+	"github.com/golobby/repl/session"
 
 	"github.com/c-bata/go-prompt"
 )

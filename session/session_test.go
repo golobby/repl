@@ -76,12 +76,7 @@ func Test_validGoFileFromSession(t *testing.T) {
 	s.addImport(`import "fmt"`)
 	s.Add(`fmt.Println("hey")`)
 	s.Add(`var a int`)
-	assert.Equal(t, `package main
-import "fmt"
-
-func main() {
-var a int
-}`, s.validGoFileFromSession())
+	assert.Equal(t, "package main\nimport \"fmt\"\n\n\nvar (\n)\nfunc main() {\nvar a int\n}", s.validGoFileFromSession())
 }
 
 func Test_add_print(t *testing.T) {
@@ -94,12 +89,6 @@ func Test_add_comment(t *testing.T) {
 	s := &Session{}
 	s.Add(`// this is a comment`)
 	assert.Equal(t, []string(nil), s.code)
-}
-
-func Test_add_type_decl(t *testing.T) {
-	s := &Session{}
-	s.Add(`type user struct{}`)
-	assert.Equal(t, s.typesAndMethods, []string{`type user struct{}`})
 }
 
 func Test_add_isImport(t *testing.T) {

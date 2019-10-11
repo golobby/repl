@@ -104,7 +104,8 @@ func Test_isShellCommand(t *testing.T) {
 }
 func Test_reSubMatch(t *testing.T) {
 	regx := regexp.MustCompile("func\\s*.+\\s*\\((?P<args>.*)\\) \\((?P<returns>.*)\\)")
-	matched := reSubMatchMap(regx, "func thisFunc(somearg string) (string, error)")
+	matched, err := reSubMatchMap(regx, "func thisFunc(somearg string) (string, error)")
+	assert.NoError(t, err)
 	assert.Equal(t, matched["args"], "somearg string")
 	assert.Equal(t, matched["returns"], "string, error")
 }
@@ -119,12 +120,6 @@ func Test_has_output(t *testing.T) {
 	assert.False(t, hasOutput(`x == 2`))
 }
 
-func Test_isExpr(t *testing.T) {
-	assert.True(t, isExpr("1+2"))
-	assert.True(t, isExpr(`"Hello World"`))
-	assert.False(t, isExpr("var x int"))
-	assert.False(t, isExpr("x:=2"))
-}
 func Test_isComment(t *testing.T) {
 	assert.False(t, isComment(""))
 	assert.True(t, isComment("// salam"))
