@@ -42,20 +42,20 @@ then REPL creates a file from state of the session running.
 In a REPL you need to have access to the vars defined no matter what scope you are in, REPL provides this feature by
 defining all vars in a global scope.
 ```go
-func someFunc() string {
-    return fmt.Sprint(a)
-}
-a = 2
-someFunc() // 2
+REPL> func someFunc() string {
+...REPL>     return fmt.Sprint(a)
+...REPL> }
+REPL> a = 2
+REPL> someFunc() // 2
 ```
 
 ### Variable Redefine/assignment
 REPL does not care about either type or value of a variable, so you can redefine or change type of variable with ease.
 ```go
-x = 3
-x = "amirreza"
-x = someType{}
-var x = 5
+REPL> x = 3
+REPL> x = "amirreza"
+REPL> x = someType{}
+REPL> var x = 5
 // all above codes are valid in a REPL session
 ```
 
@@ -81,31 +81,31 @@ types and functions.(watch Demo)
 #### Go Doc
 go doc is available as a shell command so you can access any document about any package with REPL.
 ```go
-:doc fmt
-:doc json.Marshal
+REPL> :doc fmt
+REPL> :doc json.Marshal
 ```
 #### Eval
 ```go
-:e 1+2
+REPL> :e 1+2
 // <int> 3
-:e "HelloWorld"
+REPL> :e "HelloWorld"
 // <string> "HelloWorld"
 ```
 #### Dump
 shows formatted view of current session state.
 ```go
-:dump
+REPL> :dump
 ```
 #### Pop
 pops latest entered code from session.
 ```go
-:pop
+REPL> :pop
 ```
 
 #### file
 file shows exactly code that will be generated from current state of session.
 ```go
-:file
+REPL> :file
 ```
 ## Demo
 [![asciicast](https://asciinema.org/a/273628.svg)](https://asciinema.org/a/273628)
