@@ -45,11 +45,11 @@ func Test_addCode(t *testing.T) {
 	s.code = []string{}
 	err := s.Add("fmt.Println(")
 	assert.NoError(t, err)
-	err = s.Add(`"Salam"`)
+	err = s.Add(`"Salam",`)
 	assert.NoError(t, err)
 	err = s.Add(`)`)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"fmt.Println(\n\"Salam\"\n)"}, s.code)
+	assert.Equal(t, []string{"fmt.Println(\n\"Salam\",\n)"}, s.code)
 }
 func Test_addImport(t *testing.T) {
 	s := &Session{}
@@ -100,9 +100,9 @@ func Test_add_function_call(t *testing.T) {
 func Test_add_continue_mode(t *testing.T) {
 	s := &Session{}
 	s.Add("fmt.Println(")
-	s.Add("2")
+	s.Add("2,")
 	s.Add(")")
-	assert.Equal(t, []string{"fmt.Println(\n2\n)"}, s.code)
+	assert.Equal(t, []string{"fmt.Println(\n2,\n)"}, s.code)
 }
 
 func Test_checkIfErrIsNotDecl(t *testing.T) {

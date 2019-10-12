@@ -34,6 +34,10 @@ List of REPL commands:
 :pop => pop latest code from session
 :dump => dumps current session
 :file => prints go file generated from session
+:vars => shows only vars of current state
+:types => shows only types of current state
+:funcs => shows only funcs of current state
+:imports => shows only imports of current state
 `
 const moduleTemplate = `module shell
 
@@ -116,6 +120,9 @@ func (s *Session) Add(code string) error {
 	err = s.addCode(typ, code)
 	if err != nil {
 		return err
+	}
+	if s.continueMode {
+		return nil
 	}
 	if err := checkIfHasParsingError(s.String()); err != nil {
 		s.removeLastCode()

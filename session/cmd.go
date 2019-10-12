@@ -11,6 +11,10 @@ const (
 	REPLCmdPop
 	REPLCmdDump
 	REPLCmdFile
+	REPLCmdVars
+	REPLCmdImports
+	REPLCmdTypes
+	REPLCmdFuncs
 )
 
 func isShellCommand(code string) bool {
@@ -44,6 +48,18 @@ func (s *Session) handleShellCommands(code string) error {
 	case REPLCmdFile:
 		s.shellCmdOutput = s.String()
 		return nil
+	case REPLCmdImports:
+		s.shellCmdOutput = strings.Join(s.imports, "\n")
+		return nil
+	case REPLCmdVars:
+		s.shellCmdOutput = s.vars.String()
+		return nil
+	case REPLCmdFuncs:
+		s.shellCmdOutput = s.funcsAsString()
+		return nil
+	case REPLCmdTypes:
+		s.shellCmdOutput = s.typesForSource()
+		return nil
 	default:
 		return nil
 	}
@@ -66,6 +82,14 @@ func ParseCmd(code string) (REPLCmd, string) {
 		return REPLCmdFile, ""
 	} else if isDump(code) {
 		return REPLCmdDump, ""
+	} else if isTypes(code) {
+		return REPLCmdTypes, ""
+	} else if isVars(code) {
+		return REPLCmdVars, ""
+	} else if isImports(code) {
+		return REPLCmdImports, ""
+	} else if isFuncs(code) {
+		return REPLCmdFuncs, ""
 	}
 	return 0, ""
 }
@@ -109,4 +133,29 @@ func isFile(code string) bool {
 		return false
 	}
 	return code[:5] == ":file"
+}
+
+func isTypes(code string) bool {
+	if len(code) < len(":types") {
+		return false
+	}
+	return code[:6] == ":types"
+}
+func isVars(code string) bool {
+	if len(code) < len(":vars") {
+		return false
+	}
+	return code[:5] == ":vars"
+}
+func isFuncs(code string) bool {
+	if len(code) < len(":funcs") {
+		return false
+	}
+	return code[:6] == ":funcs"
+}
+func isImports(code string) bool {
+	if len(code) < len(":imports") {
+		return false
+	}
+	return code[:7] == ":imports"
 }
