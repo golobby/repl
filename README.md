@@ -49,7 +49,7 @@ a = 2
 someFunc() // 2
 ```
 
-### Variable Redfine/assignment
+### Variable Redefine/assignment
 REPL does not care about either type or value of a variable, so you can redefine or change type of variable with ease.
 ```go
 x = 3
@@ -64,23 +64,17 @@ REPL can easily evaluate an expression for you with a simple built-in command.
 
 ### Automated Imports
 REPL uses the power of goimports so it can almost identify all packages you use and automatically import them for you.
+```go
+REPL> fmt.Println("Hello") // no need for manual import, goimports will take care of that
+```
 
 ### Helpful Error Messages
 REPL does not suppress any error message so you can see exact error message from go toolchain
 
 ### Go module discovery
 REPL build from ground up to be compatible with go modules, so when you fire up a REPL in go project which is a go module project
-REPL instantly identifies your module and imports it as a module with local path, so you can access all your public types and functions.
-
-### Variable/Function Redeclaration
-As you know Go does not allow for re declaration of variables or functions but REPL allows you 
-to re declare vars/funcs easily.
-```go
-x:=3
-:e x //<int> 3
-x:=5
-:e x // <int> 5
-```
+REPL instantly identifies your module and imports it as a module with local path, so you can access all your public 
+types and functions.(watch Demo)
 
 ### Shell Commands
 
