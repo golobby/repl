@@ -25,7 +25,7 @@ us.
 
 ## How
 REPL parses the input and put the code you entered in one of these categories:
- Imports
+- Imports
 - Var declaration/assignment
 - type definition
 - function definition
