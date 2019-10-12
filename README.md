@@ -24,15 +24,44 @@ user input. In Golang we don't have this feature by default but it does'nt mean 
 us.
 
 ## How
-golobby/repl basically creates a new golang project and gives a direct interface to the project, every line that you type into the 
-console will get directly to the go project and will be compiled instantly and you will see the result.
+REPL parses the input and put the code you entered in one of these categories:
+ Imports
+- Var declaration/assignment
+- type definition
+- function definition
+- function calls
+
+then REPL creates a file from state of the session running.
+
 #### REPL Pipeline
 `REPL Prompt -> goimports -> go compiler -> shows result of compile`
 
 ## Features
 
+### Global Access to vars
+In a REPL you need to have access to the vars defined no matter what scope you are in, REPL provides this feature by
+defining all vars in a global scope.
+```go
+func someFunc() string {
+    return fmt.Sprint(a)
+}
+a = 2
+someFunc() // 2
+```
+
+### Variable Redfine/assignment
+REPL does not care about either type or value of a variable, so you can redefine or change type of variable with ease.
+```go
+x = 3
+x = "amirreza"
+x = someType{}
+var x = 5
+// all above codes are valid in a REPL session
+```
+
 ### Instant Expression Evaluation
 REPL can easily evaluate an expression for you with a simple built-in command.
+
 ### Automated Imports
 REPL uses the power of goimports so it can almost identify all packages you use and automatically import them for you.
 
@@ -68,15 +97,21 @@ go doc is available as a shell command so you can access any document about any 
 :e "HelloWorld"
 // <string> "HelloWorld"
 ```
-#### Log
-shows the log of current session.
+#### Dump
+shows formatted view of current session state.
 ```go
-:log
+:dump
 ```
 #### Pop
 pops latest entered code from session.
 ```go
 :pop
+```
+
+#### file
+file shows exactly code that will be generated from current state of session.
+```go
+:file
 ```
 ## Demo
 [![asciicast](https://asciinema.org/a/273628.svg)](https://asciinema.org/a/273628)
