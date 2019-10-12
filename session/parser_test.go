@@ -13,7 +13,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, Empty, typ)
 	typ, err = Parse(`import "fmt"`)
 	assert.NoError(t, err)
-	assert.Equal(t, Import, typ)
+	assert.Equal(t, ImportData, typ)
 	typ, err = Parse(`func name() string { return "" }`)
 	assert.NoError(t, err)
 	assert.Equal(t, FuncDecl, typ)

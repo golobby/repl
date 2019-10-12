@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"github.com/golobby/repl/session"
@@ -35,7 +36,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 func handler(input string) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Printf("Panic: %v\n", err)
+			fmt.Printf("Panic: %v\n%s", err, debug.Stack())
 		}
 	}()
 	var start time.Time

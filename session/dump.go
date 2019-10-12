@@ -30,5 +30,5 @@ func StringOf(s map[string]string) string {
 }
 
 func (s *Session) dump() string {
-	return fmt.Sprintf(dumpTEMPLATE, strings.Join(s.imports, "\n"), StringOf(s.types), s.funcsAsString(), s.vars.String(), strings.Join(s.code, "\n"))
+	return fmt.Sprintf(dumpTEMPLATE, s.imports.AsDump(), StringOf(s.types), s.funcsAsString(), s.vars.String(), strings.Join(s.code, "\n"))
 }

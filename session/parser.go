@@ -71,14 +71,6 @@ func reSubMatchMap(r *regexp.Regexp, str string) (map[string]string, error) {
 	return subMatchMap, nil
 }
 
-func isImport(im string) bool {
-	matched, err := regexp.Match("import .+", []byte(im))
-	if err != nil {
-		panic(err)
-	}
-	return matched
-}
-
 func isPrint(code string) bool {
 	matched1, err := regexp.Match(`(fmt)\.Print.*\(\s*.*\s*\)`, []byte(code))
 	if err != nil {
