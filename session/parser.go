@@ -31,7 +31,7 @@ func Parse(code string) (Type, error) {
 		return TypeDecl, nil
 	} else if isPrint(code) {
 		return Print, nil
-	} else if IsVarDecl(code) {
+	} else if isVarDecl(code) {
 		return VarDecl, nil
 	} else {
 		return Unknown, nil
