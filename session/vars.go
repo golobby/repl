@@ -57,6 +57,7 @@ func NewVar(code string) Var {
 }
 
 func IsVarDecl(code string) bool {
-	return (strings.Contains(code, "=") && !strings.Contains(code, "==") && !strings.Contains(strings.Split(code, "=")[0], ".")) ||
-		strings.Contains(code, "var")
+	return (strings.Contains(code, ":=") || strings.Contains(code, "var")) &&
+		!strings.Contains(strings.Split(code, "=")[0], ".")
+
 }

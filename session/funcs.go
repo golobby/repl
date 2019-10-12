@@ -10,7 +10,7 @@ func (s *Session) addFunc(name string, value string) {
 	s.funcs[name] = value
 }
 
-func IsFunc(code string) bool {
+func IsFuncDecl(code string) bool {
 	matched, err := regexp.Match("^func.+", []byte(code))
 	if err != nil {
 		return false

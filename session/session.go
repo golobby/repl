@@ -59,7 +59,7 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
-func (s *Session) addCode(t StmtType, code string) error {
+func (s *Session) addCode(t Type, code string) error {
 	if s.continueMode {
 		s.appendToLastCode(code)
 		indents, shouldContinue := ShouldContinue(s.code[len(s.code)-1])
@@ -81,25 +81,25 @@ func (s *Session) addCode(t StmtType, code string) error {
 		return nil
 	}
 	switch t {
-	case StmtShell:
+	case Shell:
 		return s.handleShellCommands(code)
-	case StmtTypeImport:
+	case Import:
 		s.addImport(code)
 		return nil
-	case StmtTypePrint:
+	case Print:
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
 		return nil
-	case StmtTypeTypeDecl:
+	case TypeDecl:
 		s.addType(ExtractTypeName(code), code)
 		return nil
-	case StmtTypeFuncDecl:
+	case FuncDecl:
 		s.addFunc(ExtractFuncName(code), code)
 		return nil
-	case StmtVarDecl:
+	case VarDecl:
 		s.addVar(NewVar(code))
 		return nil
-	case StmtEmpty:
+	case Empty:
 		return nil
 	default:
 		s.code = append(s.code, code)
@@ -113,7 +113,15 @@ func (s *Session) Add(code string) error {
 	if err != nil {
 		return err
 	}
-	return s.addCode(typ, code)
+	err = s.addCode(typ, code)
+	if err != nil {
+		return err
+	}
+	if err := checkIfHasParsingError(s.String()); err != nil {
+		s.removeLastCode()
+		return err
+	}
+	return nil
 }
 
 func createTmpDir(workingDirectory string) (string, error) {

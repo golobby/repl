@@ -58,14 +58,14 @@ func Test_isFunc_true(t *testing.T) {
 	code := `func (User) Name() string{
 		return u.name
 }`
-	assert.True(t, IsFunc(code))
+	assert.True(t, IsFuncDecl(code))
 }
 
 func Test_isFunc_false(t *testing.T) {
 	code := `unc (User) Name string{
 		return u.name
 }`
-	assert.False(t, IsFunc(code))
+	assert.False(t, IsFuncDecl(code))
 }
 
 func Test_isTypeDecl_true(t *testing.T) {

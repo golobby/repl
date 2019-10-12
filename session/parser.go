@@ -3,51 +3,39 @@ package session
 import (
 	"errors"
 	"regexp"
-	"strings"
 )
 
-type StmtType uint8
+type Type uint8
 
 const (
-	StmtTypeImport = StmtType(iota)
-	StmtTypePrint
-	StmtTypeTypeDecl
-	StmtTypeFuncDecl
-	StmtUnknown
-	StmtEmpty
-	StmtShell
-	StmtVarDecl
-	StmtFunctionCall
+	Import = Type(iota)
+	TypeDecl
+	FuncDecl
+	VarDecl
+	Shell
+	Print
+	Unknown
+	Empty
 )
 
-func Parse(code string) (StmtType, error) {
+func Parse(code string) (Type, error) {
 	if isEmpty(code) {
-		return StmtEmpty, nil
+		return Empty, nil
 	} else if isShellCommand(code) {
-		return StmtShell, nil
+		return Shell, nil
 	} else if isImport(code) {
-		return StmtTypeImport, nil
-	} else if IsFunc(code) {
-		return StmtTypeFuncDecl, nil
+		return Import, nil
+	} else if IsFuncDecl(code) {
+		return FuncDecl, nil
 	} else if isTypeDecl(code) {
-		return StmtTypeTypeDecl, nil
+		return TypeDecl, nil
 	} else if isPrint(code) {
-		return StmtTypePrint, nil
-	} else if isFunctionCall(code) {
-		return StmtFunctionCall, nil
+		return Print, nil
 	} else if IsVarDecl(code) {
-		return StmtVarDecl, nil
+		return VarDecl, nil
 	} else {
-		return StmtUnknown, nil
+		return Unknown, nil
 	}
-}
-func isFunctionCall(code string) bool {
-	m, err := regexp.Match("^[a-zA-Z0-9_.-]+\\(.*\\)", []byte(code))
-	if err != nil {
-		return false
-	}
-	return m && strings.ContainsAny(code, "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
-
 }
 
 func ShouldContinue(code string) (int, bool) {
