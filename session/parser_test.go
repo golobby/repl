@@ -23,9 +23,6 @@ func TestParse(t *testing.T) {
 	typ, err = Parse(`fmt.Println("aleyk")`)
 	assert.NoError(t, err)
 	assert.Equal(t, Print, typ)
-	typ, err = Parse(`fmt.Println`)
-	assert.NoError(t, err)
-	assert.Equal(t, Unknown, typ)
 }
 func Test_shouldContinue(t *testing.T) {
 
