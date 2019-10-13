@@ -1,4 +1,4 @@
-package interpreter
+package session
 
 import "strings"
 
@@ -24,7 +24,7 @@ func isShellCommand(code string) bool {
 	return code[0] == ':'
 }
 
-func (s *Interpreter) handleShellCommands(code string) error {
+func (s *Session) handleShellCommands(code string) error {
 	typ, data := ParseCmd(code)
 	switch typ {
 	case REPLCmdDoc:

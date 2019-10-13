@@ -1,4 +1,4 @@
-package interpreter
+package session
 
 import (
 	"io/ioutil"
@@ -11,7 +11,7 @@ import (
 
 func Test_newSession(t *testing.T) {
 	monkey.Patch(createTmpDir, func(wd string) (string, error) {
-		return "somedir/Interpreter", nil
+		return "somedir/Session", nil
 	})
 	monkey.Patch(os.Chdir, func(string) error {
 		return nil
@@ -25,7 +25,7 @@ func Test_newSession(t *testing.T) {
 }
 
 func Test_addCode(t *testing.T) {
-	s := &Interpreter{}
+	s := &Session{}
 	//err := s.Add("fmt.Println(12)")
 	//assert.NoError(t, err)
 	//assert.Equal(t, []string{"fmt.Println(12)"}, s.code)
@@ -53,13 +53,13 @@ func Test_addCode(t *testing.T) {
 }
 
 func Test_removeLastCode(t *testing.T) {
-	s := &Interpreter{}
+	s := &Session{}
 	s.code = append(s.code, "some ok code", "some code caused error")
 	s.removeLastCode()
 	assert.Equal(t, []string{"some ok code"}, s.code)
 }
 func Test_removeTmpCodes(t *testing.T) {
-	s := &Interpreter{}
+	s := &Session{}
 	s.code = append(s.code, `a := 1+2`)
 	s.code = append(s.code, `fmt.Println("aaa")`)
 	s.tmpCodes = append(s.tmpCodes, 1)
@@ -68,19 +68,19 @@ func Test_removeTmpCodes(t *testing.T) {
 }
 
 func Test_add_print(t *testing.T) {
-	s := &Interpreter{}
+	s := &Session{}
 	s.Add(`fmt.Println("Salam")`)
 	assert.Equal(t, []string{`fmt.Println("Salam")`}, s.code)
 	assert.Equal(t, []int{0}, s.tmpCodes)
 }
 
 func Test_add_function_call(t *testing.T) {
-	s := &Interpreter{}
+	s := &Session{}
 	s.Add(`someFunc("salam man be to yare ghadimi")`)
 	assert.Equal(t, s.code, []string{`someFunc("salam man be to yare ghadimi")`})
 }
 func Test_add_continue_mode(t *testing.T) {
-	s := &Interpreter{}
+	s := &Session{}
 	s.Add("fmt.Println(")
 	s.Add("2,")
 	s.Add(")")

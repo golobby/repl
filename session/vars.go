@@ -1,4 +1,4 @@
-package interpreter
+package session
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ func (v Var) String() string {
 	return fmt.Sprintf("%s %s", v.Name, v.Type)
 }
 
-func (s *Interpreter) addVar(v Var) {
+func (s *Session) addVar(v Var) {
 	s.vars[strings.TrimSpace(v.Name)] = v
 }
 

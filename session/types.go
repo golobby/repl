@@ -1,11 +1,11 @@
-package interpreter
+package session
 
 import (
 	"go/token"
 	"strings"
 )
 
-func (s *Interpreter) addType(name string, code string) {
+func (s *Session) addType(name string, code string) {
 	s.types[name] = code
 }
 
@@ -19,7 +19,7 @@ func isTypeDecl(code string) bool {
 	return false
 }
 
-func (s *Interpreter) typesForSource() string {
+func (s *Session) typesForSource() string {
 	var ts []string
 	for _, v := range s.types {
 		ts = append(ts, v)

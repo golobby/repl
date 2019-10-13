@@ -8,11 +8,13 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/golobby/repl/session"
+
 	"github.com/c-bata/go-prompt"
 )
 
 var (
-	currentSession *Session
+	currentSession *session.Session
 	DEBUG          bool
 )
 
@@ -62,7 +64,10 @@ func main() {
 	flag.Parse()
 	DEBUG = *debug
 
-	currentSession = newSession(wd)
+	currentSession, err = session.NewSession(wd)
+	if err != nil {
+		panic(err)
+	}
 
 	l, _ := base64.StdEncoding.DecodeString(logo)
 	fmt.Println(string(l))
