@@ -49,7 +49,7 @@ func (s *Session) handleShellCommands(code string) error {
 		s.shellCmdOutput = s.String()
 		return nil
 	case REPLCmdImports:
-		s.shellCmdOutput = strings.Join(s.imports, "\n")
+		s.shellCmdOutput = s.imports.AsDump()
 		return nil
 	case REPLCmdVars:
 		s.shellCmdOutput = s.vars.String()

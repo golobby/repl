@@ -2,7 +2,7 @@ package session
 
 import (
 	"fmt"
-	"regexp"
+	"go/token"
 	"strings"
 )
 
@@ -11,20 +11,31 @@ func (s *Session) addFunc(name string, value string) {
 }
 
 func IsFuncDecl(code string) bool {
-	matched, err := regexp.Match("^func.+", []byte(code))
-	if err != nil {
-		return false
+	tokens, _ := tokenizerAndLiterizer(code)
+
+	for idx, tok := range tokens {
+		if idx == 0 && tok == token.FUNC {
+			return true
+		}
 	}
-	return matched
+	return false
 }
 
 func ExtractFuncName(code string) string {
-	matched, err := reSubMatchMap(regexp.MustCompile(`func\s+(\(.*\))?\s*(?P<funcname>[a-zA-Z0-9]+)\(.*\).*`), code)
-	if err != nil {
-		return ""
-	}
-	if name, ok := matched["funcname"]; ok {
-		return name
+	tokens, lits := tokenizerAndLiterizer(code)
+	var inParen int
+	for idx, tok := range tokens {
+		if tok == token.LPAREN {
+			inParen++
+			continue
+		}
+		if tok == token.RPAREN {
+			inParen--
+			continue
+		}
+		if inParen == 0 && tok == token.IDENT {
+			return lits[idx]
+		}
 	}
 	return ""
 }

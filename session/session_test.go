@@ -51,12 +51,7 @@ func Test_addCode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"fmt.Println(\n\"Salam\",\n)"}, s.code)
 }
-func Test_addImport(t *testing.T) {
-	s := &Session{}
-	s.addImport(`import "fmt"`)
-	s.addImport(`import "os/exec"`)
-	assert.Equal(t, []string{`import "fmt"`, `import "os/exec"`}, s.imports)
-}
+
 func Test_removeLastCode(t *testing.T) {
 	s := &Session{}
 	s.code = append(s.code, "some ok code", "some code caused error")
@@ -71,14 +66,6 @@ func Test_removeTmpCodes(t *testing.T) {
 	s.removeTmpCodes()
 	assert.Equal(t, []string{"a := 1+2"}, s.code)
 }
-func Test_validGoFileFromSession(t *testing.T) {
-	s := &Session{}
-	s.vars = map[string]Var{}
-	s.addImport(`import "fmt"`)
-	s.Add(`fmt.Println("hey")`)
-	s.Add(`var a int`)
-	assert.Equal(t, "package main\nimport \"fmt\"\n\n\nvar(\na int\n)\nfunc main() {\n\n}", s.String())
-}
 
 func Test_add_print(t *testing.T) {
 	s := &Session{}
@@ -87,11 +74,6 @@ func Test_add_print(t *testing.T) {
 	assert.Equal(t, []int{0}, s.tmpCodes)
 }
 
-func Test_add_isImport(t *testing.T) {
-	s := &Session{}
-	s.Add(`import "github.com"`)
-	assert.Equal(t, s.imports, []string{`import "github.com"`})
-}
 func Test_add_function_call(t *testing.T) {
 	s := &Session{}
 	s.Add(`someFunc("salam man be to yare ghadimi")`)

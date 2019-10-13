@@ -2,7 +2,8 @@ package session
 
 import (
 	"fmt"
-	"regexp"
+	"go/scanner"
+	"go/token"
 	"strings"
 )
 
@@ -32,32 +33,88 @@ func (vs Vars) String() string {
 	return strings.Join(sets, "\n\t")
 }
 
-func NewVar(code string) Var {
-	if strings.Contains(code, "=") {
-		regex := regexp.MustCompile(`(var)?\s*(?P<varnames>[a-zA-Z0-9_,\s]+)\s*(?P<type>[a-zA-Z0-9_]+)?\s*:?=(?P<value>.+)`)
-		matched, err := reSubMatchMap(regex, code)
-		if err != nil {
-			return Var{}
+func createScannerFor(code string) scanner.Scanner {
+	var s scanner.Scanner
+	fs := token.NewFileSet()
+	s.Init(fs.AddFile("", fs.Base(), len(code)), []byte(code), nil, scanner.ScanComments)
+	return s
+}
+func tokenizerAndLiterizer(code string) ([]token.Token, []string) {
+	s := createScannerFor(code)
+	tokens := []token.Token{}
+	lits := []string{}
+	for {
+		_, tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
 		}
-		varname, _ := matched["varnames"]
-		value, _ := matched["value"]
-		typ, _ := matched["type"]
-		return Var{
-			varname, typ, value,
-		}
+		tokens = append(tokens, tok)
+		lits = append(lits, lit)
 	}
-	regex := regexp.MustCompile(`(var)?\s*(?P<varname>[a-zA-Z0-9_]+)\s*(?P<type>.+)`)
-	matched, err := reSubMatchMap(regex, code)
-	if err != nil {
-		return Var{}
-	}
-	varname, _ := matched["varname"]
-	typ, _ := matched["type"]
-	return Var{varname, typ, ""}
+	return tokens, lits
 }
 
-func IsVarDecl(code string) bool {
-	return (strings.Contains(code, ":=") || strings.Contains(code, "var")) &&
-		!strings.Contains(strings.Split(code, "=")[0], ".")
+func isVarDecl(code string) bool {
+	tokens, _ := tokenizerAndLiterizer(code)
+	for _, t := range tokens {
+		if t == token.DEFINE || t == token.VAR {
+			return true
+		}
+	}
+	return false
+}
+func NewVar(code string) Var {
+	tokens, lits := tokenizerAndLiterizer(code)
+	for _, t := range tokens {
+		if t == token.DEFINE {
+			return ExtractDataFromVarWithDefine(tokens, lits)
+		} else if t == token.VAR {
+			return ExtractDataFromVarWithVar(tokens, lits)
+		}
+	}
+	return Var{}
+}
 
+func ExtractDataFromVarWithVar(tokens []token.Token, lits []string) Var {
+	var idents []string
+	for idx, tok := range tokens {
+		if tok == token.VAR {
+			continue
+		}
+		if tok == token.ASSIGN {
+			continue
+		}
+		if lits[idx] == " " || lits[idx] == "\n" {
+			continue
+		}
+		idents = append(idents, lits[idx])
+	}
+
+	if len(idents) == 2 {
+		return Var{
+			Name: idents[0], Value: idents[1],
+		}
+	} else if len(idents) == 3 {
+		return Var{
+			idents[0], idents[1], idents[2],
+		}
+	}
+	return Var{}
+}
+func ExtractDataFromVarWithDefine(tokens []token.Token, lits []string) Var {
+	var idents []string
+	var valueIdx int
+	for idx, tok := range tokens {
+		if tok == token.IDENT {
+			idents = append(idents, lits[idx])
+			continue
+		} else if tok == token.DEFINE {
+			continue
+		}
+		if lits[idx] == " " || lits[idx] == "\n" {
+			continue
+		}
+		valueIdx = idx
+	}
+	return Var{Name: idents[0], Value: lits[valueIdx]}
 }

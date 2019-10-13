@@ -1,6 +1,7 @@
 package session
 
 import (
+	"go/token"
 	"regexp"
 	"strings"
 )
@@ -26,11 +27,11 @@ func (s *Session) typesForSource() string {
 }
 
 func ExtractTypeName(code string) string {
-	regex := regexp.MustCompile(`type\s+(?P<name>[a-zA-Z0-9_]+)(.|\s)+`)
-	matched, err := reSubMatchMap(regex, code)
-	if err != nil {
-		return ""
+	tokens, lits := tokenizerAndLiterizer(code)
+	for i, t := range tokens {
+		if t == token.IDENT {
+			return lits[i]
+		}
 	}
-	typeName, _ := matched["name"]
-	return typeName
+	return ""
 }

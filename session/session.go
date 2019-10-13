@@ -14,7 +14,7 @@ import (
 
 type Session struct {
 	shellCmdOutput string
-	imports        []string
+	imports        ImportDatas
 	types          map[string]string
 	funcs          map[string]string
 	vars           Vars
@@ -49,9 +49,12 @@ go 1.13
 func wrapInPrint(code string) string {
 	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
 }
+func (s *Session) importsForSource() string {
+	return s.imports.String()
+}
 
-func (s *Session) addImport(im string) {
-	s.imports = append(s.imports, im)
+func (s *Session) addImport(im []ImportData) {
+	s.imports = append(s.imports, im...)
 }
 
 func (s *Session) appendToLastCode(code string) {
@@ -88,7 +91,7 @@ func (s *Session) addCode(t Type, code string) error {
 	case Shell:
 		return s.handleShellCommands(code)
 	case Import:
-		s.addImport(code)
+		s.addImport(ExtractImportData(code))
 		return nil
 	case Print:
 		s.code = append(s.code, code)
@@ -163,7 +166,7 @@ func NewSession(workingDirectory string) (*Session, error) {
 	}
 	session := &Session{
 		shellCmdOutput: "",
-		imports:        []string{},
+		imports:        ImportDatas{},
 		types:          map[string]string{},
 		funcs:          map[string]string{},
 		vars:           map[string]Var{},
@@ -202,6 +205,9 @@ func (s *Session) writeToFile() error {
 }
 
 func (s *Session) removeLastCode() {
+	if len(s.code) == 0 {
+		s.code = []string{}
+	}
 	idx := len(s.code) - 1
 	for tmpIdx, t := range s.tmpCodes {
 		if t == idx {
@@ -268,5 +274,5 @@ func (s *Session) Eval() string {
 
 func (s *Session) String() string {
 	code := "package main\n%s\n%s\n%s\n%s\nfunc main() {\n%s\n}"
-	return fmt.Sprintf(code, strings.Join(s.imports, "\n"), s.typesForSource(), s.funcsForSource(), "var(\n"+s.vars.String()+"\n)", strings.Join(s.code, "\n"))
+	return fmt.Sprintf(code, s.importsForSource(), s.typesForSource(), s.funcsForSource(), "var(\n"+s.vars.String()+"\n)", strings.Join(s.code, "\n"))
 }

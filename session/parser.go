@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"go/token"
 	"regexp"
 )
 
@@ -31,7 +32,7 @@ func Parse(code string) (Type, error) {
 		return TypeDecl, nil
 	} else if isPrint(code) {
 		return Print, nil
-	} else if IsVarDecl(code) {
+	} else if isVarDecl(code) {
 		return VarDecl, nil
 	} else {
 		return Unknown, nil
@@ -71,22 +72,13 @@ func reSubMatchMap(r *regexp.Regexp, str string) (map[string]string, error) {
 	return subMatchMap, nil
 }
 
-func isImport(im string) bool {
-	matched, err := regexp.Match("import .+", []byte(im))
-	if err != nil {
-		panic(err)
-	}
-	return matched
-}
-
 func isPrint(code string) bool {
-	matched1, err := regexp.Match(`(fmt)\.Print.*\(\s*.*\s*\)`, []byte(code))
-	if err != nil {
-		panic(err)
+	tokens, lits := tokenizerAndLiterizer(code)
+	for i, t := range tokens {
+		if t == token.IDENT &&
+			(lits[i] == "Println" || lits[i] == "Printf" || lits[i] == "Print" || lits[i] == "println") || lits[i] == "printf" || lits[i] == "print" {
+			return true
+		}
 	}
-	matched2, err := regexp.Match(`^print(ln|f)\(\s*.*\s*\)`, []byte(code))
-	if err != nil {
-		panic(err)
-	}
-	return matched1 || matched2
+	return false
 }
