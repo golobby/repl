@@ -2,7 +2,6 @@ package session
 
 import (
 	"go/token"
-	"regexp"
 	"strings"
 )
 
@@ -11,11 +10,13 @@ func (s *Session) addType(name string, code string) {
 }
 
 func isTypeDecl(code string) bool {
-	matched, err := regexp.Match("type .+", []byte(code))
-	if err != nil {
-		return false
+	tokens, _ := tokenizerAndLiterizer(code)
+	for _, t := range tokens {
+		if t == token.TYPE {
+			return true
+		}
 	}
-	return matched
+	return false
 }
 
 func (s *Session) typesForSource() string {
