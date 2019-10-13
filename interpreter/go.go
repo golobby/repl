@@ -1,4 +1,4 @@
-package session
+package interpreter
 
 import (
 	"fmt"
@@ -40,6 +40,6 @@ func createReplaceRequireClause(moduleName, localPath string) string {
 	return fmt.Sprintf(`replace %s => %s`, moduleName, localPath)
 }
 
-func (s *Session) createModule(wd string, moduleName string) error {
+func (s *Interpreter) createModule(wd string, moduleName string) error {
 	return ioutil.WriteFile("go.mod", []byte(fmt.Sprintf(moduleTemplate, createReplaceRequireClause(moduleName, wd))), 500)
 }

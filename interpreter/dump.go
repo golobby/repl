@@ -1,4 +1,4 @@
-package session
+package interpreter
 
 import (
 	"fmt"
@@ -29,6 +29,6 @@ func StringOf(s map[string]string) string {
 	return strings.Join(types, "\n\t")
 }
 
-func (s *Session) dump() string {
+func (s *Interpreter) dump() string {
 	return fmt.Sprintf(dumpTEMPLATE, s.imports.AsDump(), StringOf(s.types), s.funcsAsString(), s.vars.String(), strings.Join(s.code, "\n"))
 }

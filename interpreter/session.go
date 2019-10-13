@@ -1,4 +1,4 @@
-package session
+package interpreter
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type Session struct {
+type Interpreter struct {
 	shellCmdOutput string
 	imports        ImportDatas
 	types          map[string]string
@@ -31,9 +31,9 @@ List of REPL commands:
 :help => shows help
 :doc => shows go documentation of package/function
 :e => evaluates expression
-:pop => pop latest code from session
-:dump => dumps current session
-:file => prints go file generated from session
+:pop => pop latest code from interpreter
+:dump => dumps current interpreter
+:file => prints go file generated from interpreter
 :vars => shows only vars of current state
 :types => shows only types of current state
 :funcs => shows only funcs of current state
@@ -49,15 +49,15 @@ go 1.13
 func wrapInPrint(code string) string {
 	return fmt.Sprintf(`fmt.Printf("<%%T> %%+v\n", %s, %s)`, code, code)
 }
-func (s *Session) importsForSource() string {
+func (s *Interpreter) importsForSource() string {
 	return s.imports.String()
 }
 
-func (s *Session) addImport(im []ImportData) {
+func (s *Interpreter) addImport(im []ImportData) {
 	s.imports = append(s.imports, im...)
 }
 
-func (s *Session) appendToLastCode(code string) {
+func (s *Interpreter) appendToLastCode(code string) {
 	if len(s.code) == 0 {
 		s.code = append(s.code, code)
 		return
@@ -66,7 +66,7 @@ func (s *Session) appendToLastCode(code string) {
 	return
 }
 
-func (s *Session) addCode(t Type, code string) error {
+func (s *Interpreter) addCode(t Type, code string) error {
 	if s.continueMode {
 		s.appendToLastCode(code)
 		indents, shouldContinue := ShouldContinue(s.code[len(s.code)-1])
@@ -114,7 +114,7 @@ func (s *Session) addCode(t Type, code string) error {
 	}
 }
 
-func (s *Session) Add(code string) error {
+func (s *Interpreter) Add(code string) error {
 	s.removeTmpCodes()
 	typ, err := Parse(code)
 	if err != nil {
@@ -143,7 +143,7 @@ func createTmpDir(workingDirectory string) (string, error) {
 	return sessionDir, nil
 }
 
-func (s *Session) removeTmpCodes() {
+func (s *Interpreter) removeTmpCodes() {
 	for _, t := range s.tmpCodes {
 		s.code[t] = ""
 	}
@@ -155,7 +155,7 @@ func (s *Session) removeTmpCodes() {
 	}
 }
 
-func NewSession(workingDirectory string) (*Session, error) {
+func NewInterpreter(workingDirectory string) (*Interpreter, error) {
 	sessionDir, err := createTmpDir(workingDirectory)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func NewSession(workingDirectory string) (*Session, error) {
 	if err != nil {
 		panic(err)
 	}
-	session := &Session{
+	session := &Interpreter{
 		shellCmdOutput: "",
 		imports:        ImportDatas{},
 		types:          map[string]string{},
@@ -196,15 +196,15 @@ func NewSession(workingDirectory string) (*Session, error) {
 	return session, nil
 }
 
-func (s *Session) removeTmpDir() error {
+func (s *Interpreter) removeTmpDir() error {
 	return os.RemoveAll(s.sessionDir)
 }
 
-func (s *Session) writeToFile() error {
+func (s *Interpreter) writeToFile() error {
 	return ioutil.WriteFile(s.sessionDir+"/main.go", []byte(s.String()), 500)
 }
 
-func (s *Session) removeLastCode() {
+func (s *Interpreter) removeLastCode() {
 	if len(s.code) == 0 {
 		s.code = []string{}
 	}
@@ -230,7 +230,7 @@ func checkIfHasParsingError(code string) error {
 	return nil
 }
 
-func (s *Session) Eval() string {
+func (s *Interpreter) Eval() string {
 	if s.shellCmdOutput != "" {
 		output := s.shellCmdOutput
 		s.shellCmdOutput = ""
@@ -272,7 +272,7 @@ func (s *Session) Eval() string {
 	return fmt.Sprintf("%s", out)
 }
 
-func (s *Session) String() string {
+func (s *Interpreter) String() string {
 	code := "package main\n%s\n%s\n%s\n%s\nfunc main() {\n%s\n}"
 	return fmt.Sprintf(code, s.importsForSource(), s.typesForSource(), s.funcsForSource(), "var(\n"+s.vars.String()+"\n)", strings.Join(s.code, "\n"))
 }
