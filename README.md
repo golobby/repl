@@ -52,9 +52,9 @@ REPL> someFunc() // 2
 ### Variable Redefine/assignment
 REPL does not care about either type or value of a variable, so you can redefine or change type of variable with ease.
 ```go
-REPL> x = 3
-REPL> x = "amirreza"
-REPL> x = someType{}
+REPL> x := 3
+REPL> x := "amirreza"
+REPL> x := someType{}
 REPL> var x = 5
 // all above codes are valid in a REPL session
 ```
