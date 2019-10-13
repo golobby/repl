@@ -47,23 +47,25 @@ func isImport(im string) bool {
 func ExtractImportData(im string) []ImportData {
 	tokens, lits := tokenizerAndLiterizer(im)
 	var imports []ImportData
-	i := ImportData{}
-	imports = append(imports, i)
+	var currentImport ImportData
 	for idx, tok := range tokens {
 		if tok == token.EOF {
 			break
 		}
-		if tok == token.IMPORT {
+		if tok == token.IMPORT || tok == token.LPAREN || tok == token.RPAREN {
 			continue
 		}
-		if tok == token.STRING && lits[idx] == "\n" {
-			imports = append(imports, ImportData{})
+		if lits[idx] == "\n" {
+			if currentImport.Path != "" {
+				imports = append(imports, currentImport)
+			}
+			currentImport = ImportData{}
 		}
 		if tok == token.IDENT {
-			imports[len(imports)-1].Alias = lits[idx]
+			currentImport.Alias = lits[idx]
 		}
 		if tok == token.STRING {
-			imports[len(imports)-1].Path = lits[idx]
+			currentImport.Path = lits[idx]
 		}
 	}
 	return imports
