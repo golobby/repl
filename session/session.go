@@ -185,14 +185,6 @@ func NewSession(workingDirectory string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = goGet()
-	if err != nil {
-		return nil, err
-	}
-	err = goBuild()
-	if err != nil {
-		return nil, err
-	}
 	return session, nil
 }
 
@@ -207,6 +199,7 @@ func (s *Session) writeToFile() error {
 func (s *Session) removeLastCode() {
 	if len(s.code) == 0 {
 		s.code = []string{}
+		return
 	}
 	idx := len(s.code) - 1
 	for tmpIdx, t := range s.tmpCodes {

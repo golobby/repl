@@ -84,7 +84,7 @@ func ExtractDataFromVarWithVar(tokens []token.Token, lits []string) Var {
 		if tok == token.ASSIGN {
 			continue
 		}
-		if lits[idx] == " " || lits[idx] == "\n" {
+		if lits[idx] == " " || lits[idx] == "\n" || lits[idx] == "" {
 			continue
 		}
 		idents = append(idents, lits[idx])
