@@ -1,8 +1,7 @@
-package session
+package interpreter
 
 import (
 	"fmt"
-	"go/scanner"
 	"go/token"
 	"strings"
 )
@@ -21,7 +20,7 @@ func (v Var) String() string {
 	return fmt.Sprintf("%s %s", v.Name, v.Type)
 }
 
-func (s *Session) addVar(v Var) {
+func (s *Interpreter) addVar(v Var) {
 	s.vars[strings.TrimSpace(v.Name)] = v
 }
 
@@ -31,27 +30,6 @@ func (vs Vars) String() string {
 		sets = append(sets, v.String())
 	}
 	return strings.Join(sets, "\n\t")
-}
-
-func createScannerFor(code string) scanner.Scanner {
-	var s scanner.Scanner
-	fs := token.NewFileSet()
-	s.Init(fs.AddFile("", fs.Base(), len(code)), []byte(code), nil, scanner.ScanComments)
-	return s
-}
-func tokenizerAndLiterizer(code string) ([]token.Token, []string) {
-	s := createScannerFor(code)
-	tokens := []token.Token{}
-	lits := []string{}
-	for {
-		_, tok, lit := s.Scan()
-		if tok == token.EOF {
-			break
-		}
-		tokens = append(tokens, tok)
-		lits = append(lits, lit)
-	}
-	return tokens, lits
 }
 
 func isVarDecl(code string) bool {
@@ -67,15 +45,15 @@ func NewVar(code string) Var {
 	tokens, lits := tokenizerAndLiterizer(code)
 	for _, t := range tokens {
 		if t == token.DEFINE {
-			return ExtractDataFromVarWithDefine(tokens, lits)
+			return extractDataFromVarWithDefine(tokens, lits)
 		} else if t == token.VAR {
-			return ExtractDataFromVarWithVar(tokens, lits)
+			return extractDataFromVarWithVar(tokens, lits)
 		}
 	}
 	return Var{}
 }
 
-func ExtractDataFromVarWithVar(tokens []token.Token, lits []string) Var {
+func extractDataFromVarWithVar(tokens []token.Token, lits []string) Var {
 	var idents []string
 	for idx, tok := range tokens {
 		if tok == token.VAR {
@@ -101,7 +79,7 @@ func ExtractDataFromVarWithVar(tokens []token.Token, lits []string) Var {
 	}
 	return Var{}
 }
-func ExtractDataFromVarWithDefine(tokens []token.Token, lits []string) Var {
+func extractDataFromVarWithDefine(tokens []token.Token, lits []string) Var {
 	var idents []string
 	var valueIdx int
 	for idx, tok := range tokens {

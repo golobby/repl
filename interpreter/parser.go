@@ -1,9 +1,8 @@
-package session
+package interpreter
 
 import (
-	"errors"
+	"go/scanner"
 	"go/token"
-	"regexp"
 )
 
 type Type uint8
@@ -18,6 +17,27 @@ const (
 	Unknown
 	Empty
 )
+
+func createScannerFor(code string) scanner.Scanner {
+	var s scanner.Scanner
+	fs := token.NewFileSet()
+	s.Init(fs.AddFile("", fs.Base(), len(code)), []byte(code), nil, scanner.ScanComments)
+	return s
+}
+func tokenizerAndLiterizer(code string) ([]token.Token, []string) {
+	s := createScannerFor(code)
+	tokens := []token.Token{}
+	lits := []string{}
+	for {
+		_, tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
+		}
+		tokens = append(tokens, tok)
+		lits = append(lits, lit)
+	}
+	return tokens, lits
+}
 
 func Parse(code string) (Type, error) {
 	if isEmpty(code) {
@@ -55,21 +75,6 @@ func ShouldContinue(code string) (int, bool) {
 }
 func isEmpty(code string) bool {
 	return len(code) == 0
-}
-
-func reSubMatchMap(r *regexp.Regexp, str string) (map[string]string, error) {
-	match := r.FindStringSubmatch(str)
-	if len(match) == 0 {
-		return nil, errors.New("cannot match")
-	}
-	subMatchMap := make(map[string]string)
-	for i, name := range r.SubexpNames() {
-		if i != 0 {
-			subMatchMap[name] = match[i]
-		}
-	}
-
-	return subMatchMap, nil
 }
 
 func isPrint(code string) bool {

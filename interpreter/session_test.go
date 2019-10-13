@@ -1,6 +1,7 @@
-package session
+package interpreter
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -11,7 +12,7 @@ import (
 
 func Test_newSession(t *testing.T) {
 	monkey.Patch(createTmpDir, func(wd string) (string, error) {
-		return "somedir/Session", nil
+		return "somedir/Interpreter", nil
 	})
 	monkey.Patch(os.Chdir, func(string) error {
 		return nil
@@ -25,23 +26,7 @@ func Test_newSession(t *testing.T) {
 }
 
 func Test_addCode(t *testing.T) {
-	s := &Session{}
-	//err := s.Add("fmt.Println(12)")
-	//assert.NoError(t, err)
-	//assert.Equal(t, []string{"fmt.Println(12)"}, s.code)
-	//err = s.Add("fmt.Println(13)")
-	//assert.NoError(t, err)
-	//assert.Equal(t, []string{"fmt.Println(13)"}, s.code)
-	//err = s.Add("type user struct{")
-	//assert.NoError(t, err)
-	//err = s.Add("Name string")
-	//assert.NoError(t, err)
-	//err = s.Add("}")
-	//assert.NoError(t, err)
-	//assert.Equal(t, []string{"type user struct{\nName string\n}"}, s.typesAndMethods)
-	//err = s.Add("")
-	//assert.NoError(t, err)
-	//assert.Equal(t, []string{}, s.code)
+	s := &Interpreter{}
 	s.code = []string{}
 	err := s.Add("fmt.Println(")
 	assert.NoError(t, err)
@@ -53,13 +38,13 @@ func Test_addCode(t *testing.T) {
 }
 
 func Test_removeLastCode(t *testing.T) {
-	s := &Session{}
+	s := &Interpreter{}
 	s.code = append(s.code, "some ok code", "some code caused error")
 	s.removeLastCode()
 	assert.Equal(t, []string{"some ok code"}, s.code)
 }
 func Test_removeTmpCodes(t *testing.T) {
-	s := &Session{}
+	s := &Interpreter{}
 	s.code = append(s.code, `a := 1+2`)
 	s.code = append(s.code, `fmt.Println("aaa")`)
 	s.tmpCodes = append(s.tmpCodes, 1)
@@ -68,19 +53,19 @@ func Test_removeTmpCodes(t *testing.T) {
 }
 
 func Test_add_print(t *testing.T) {
-	s := &Session{}
+	s := &Interpreter{}
 	s.Add(`fmt.Println("Salam")`)
 	assert.Equal(t, []string{`fmt.Println("Salam")`}, s.code)
 	assert.Equal(t, []int{0}, s.tmpCodes)
 }
 
 func Test_add_function_call(t *testing.T) {
-	s := &Session{}
+	s := &Interpreter{}
 	s.Add(`someFunc("salam man be to yare ghadimi")`)
 	assert.Equal(t, s.code, []string{`someFunc("salam man be to yare ghadimi")`})
 }
 func Test_add_continue_mode(t *testing.T) {
-	s := &Session{}
+	s := &Interpreter{}
 	s.Add("fmt.Println(")
 	s.Add("2,")
 	s.Add(")")
@@ -126,4 +111,64 @@ func Test_getModuleNameOfCurrentProject_not_in_go_project(t *testing.T) {
 	moduleName := getModuleNameOfCurrentProject("somedir")
 	assert.Equal(t, moduleName, "")
 	monkey.Unpatch(ioutil.ReadFile)
+}
+
+func Test_Integration(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	i, err := NewSession(wd)
+	err = i.Add("var x =2")
+	assert.NoError(t, err)
+	assert.Equal(t, Var{"x", "", "2"}, i.vars["x"])
+	err = i.Add("type user struct{")
+	assert.NoError(t, err)
+	assert.True(t, i.continueMode)
+	err = i.Add("Name string")
+	assert.NoError(t, err)
+	assert.True(t, i.continueMode)
+	err = i.Add("}")
+	assert.NoError(t, err)
+	assert.False(t, i.continueMode)
+	assert.Equal(t, "type user struct{\nName string\n}", i.types["user"])
+	err = i.Add(`import "fmt"`)
+	assert.NoError(t, err)
+	assert.Equal(t, ImportDatas{{`"fmt"`, ""}}, i.imports)
+	err = i.Add(`import (`)
+	assert.NoError(t, err)
+	assert.True(t, i.continueMode)
+	err = i.Add(`"os"`)
+	assert.NoError(t, err)
+	assert.True(t, i.continueMode)
+	err = i.Add(`"exec"`)
+	assert.NoError(t, err)
+	assert.True(t, i.continueMode)
+	err = i.Add(")")
+	assert.NoError(t, err)
+	assert.False(t, i.continueMode)
+	assert.Equal(t, ImportDatas{{`"fmt"`, ""}, {`"os"`, ""}, {`"exec"`, ""}}, i.imports)
+	err = i.Add(":vars")
+	assert.NoError(t, err)
+	assert.Equal(t, i.vars.String(), i.shellCmdOutput)
+	err = i.Add(`:types`)
+	assert.NoError(t, err)
+	assert.Equal(t, i.typesForSource(), i.shellCmdOutput)
+	err = i.Add(":help")
+	assert.NoError(t, err)
+	assert.Equal(t, helpText, i.shellCmdOutput)
+	err = i.Add(`:imports`)
+	assert.NoError(t, err)
+	assert.Equal(t, i.imports.AsDump()+"\n", i.Eval())
+	err = i.Add("x+=2")
+	assert.NoError(t, err)
+	out := i.Eval()
+	fmt.Println(out)
+	assert.Empty(t, out)
+	assert.Equal(t, []string{"x+=2"}, i.code)
+	err = i.Add(":e x")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"x+=2", wrapInPrint("x")}, i.code)
+	out = i.Eval()
+	assert.Equal(t, "<int> 4\n", out)
 }

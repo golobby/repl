@@ -56,7 +56,7 @@ REPL> x := 3
 REPL> x := "amirreza"
 REPL> x := someType{}
 REPL> var x = 5
-// all above codes are valid in a REPL session
+// all above codes are valid in a REPL interpreter
 ```
 
 ### Instant Expression Evaluation

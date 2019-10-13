@@ -1,7 +1,6 @@
-package session
+package interpreter
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,6 +22,16 @@ func TestParse(t *testing.T) {
 	typ, err = Parse(`fmt.Println("aleyk")`)
 	assert.NoError(t, err)
 	assert.Equal(t, Print, typ)
+	typ, err = Parse(`var x int`)
+	assert.NoError(t, err)
+	assert.Equal(t, VarDecl, typ)
+	typ, err = Parse(`var x = 2`)
+	assert.NoError(t, err)
+	assert.Equal(t, VarDecl, typ)
+	typ, err = Parse(` x := 2`)
+	assert.NoError(t, err)
+	assert.Equal(t, VarDecl, typ)
+
 }
 func Test_shouldContinue(t *testing.T) {
 
@@ -95,11 +104,4 @@ func Test_isShellCommand(t *testing.T) {
 	assert.True(t, isShellCommand(":help"))
 	assert.True(t, isShellCommand(":doc"))
 	assert.True(t, isShellCommand(":pp"))
-}
-func Test_reSubMatch(t *testing.T) {
-	regx := regexp.MustCompile("func\\s*.+\\s*\\((?P<args>.*)\\) \\((?P<returns>.*)\\)")
-	matched, err := reSubMatchMap(regx, "func thisFunc(somearg string) (string, error)")
-	assert.NoError(t, err)
-	assert.Equal(t, matched["args"], "somearg string")
-	assert.Equal(t, matched["returns"], "string, error")
 }

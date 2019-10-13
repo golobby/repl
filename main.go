@@ -8,14 +8,14 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/golobby/repl/session"
+	"github.com/golobby/repl/interpreter"
 
 	"github.com/c-bata/go-prompt"
 )
 
 var (
-	currentSession *session.Session
-	DEBUG          bool
+	currentInterpreter *interpreter.Interpreter
+	DEBUG              bool
 )
 
 const (
@@ -43,13 +43,13 @@ func handler(input string) {
 	if DEBUG {
 		start = time.Now()
 	}
-	err := currentSession.Add(input)
+	err := currentInterpreter.Add(input)
 	if err != nil {
 		fmt.Print(err.Error())
 		return
 	}
 
-	fmt.Print(currentSession.Eval())
+	fmt.Print(currentInterpreter.Eval())
 	if DEBUG {
 		fmt.Printf(":::::: D => %v\n", time.Since(start))
 	}
@@ -64,7 +64,7 @@ func main() {
 	flag.Parse()
 	DEBUG = *debug
 
-	currentSession, err = session.NewSession(wd)
+	currentInterpreter, err = interpreter.NewSession(wd)
 	if err != nil {
 		panic(err)
 	}
