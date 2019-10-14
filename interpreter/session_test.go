@@ -1,7 +1,6 @@
 package interpreter
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -122,64 +121,87 @@ func Test_Integration(t *testing.T) {
 	err = i.Add("var x =2")
 	assert.NoError(t, err)
 	assert.Equal(t, Var{"x", "", "2"}, i.vars["x"])
+
 	err = i.Add("type user struct{")
 	assert.NoError(t, err)
 	assert.True(t, i.continueMode)
+
 	err = i.Add("Name string")
 	assert.NoError(t, err)
 	assert.True(t, i.continueMode)
+
 	err = i.Add("}")
 	assert.NoError(t, err)
 	assert.False(t, i.continueMode)
 	assert.Equal(t, "type user struct{\nName string\n}", i.types["user"])
+
 	err = i.Add(`import "fmt"`)
 	assert.NoError(t, err)
 	assert.Equal(t, ImportDatas{{`"fmt"`, ""}}, i.imports)
+
 	err = i.Add(`import (`)
 	assert.NoError(t, err)
 	assert.True(t, i.continueMode)
+
 	err = i.Add(`"os"`)
 	assert.NoError(t, err)
 	assert.True(t, i.continueMode)
+
 	err = i.Add(`"exec"`)
 	assert.NoError(t, err)
 	assert.True(t, i.continueMode)
+
 	err = i.Add(")")
 	assert.NoError(t, err)
 	assert.False(t, i.continueMode)
 	assert.Equal(t, ImportDatas{{`"fmt"`, ""}, {`"os"`, ""}, {`"exec"`, ""}}, i.imports)
+
 	err = i.Add(":vars")
 	assert.NoError(t, err)
 	assert.Equal(t, i.vars.String(), i.shellCmdOutput)
+
 	err = i.Add(`:types`)
 	assert.NoError(t, err)
 	assert.Equal(t, i.typesForSource(), i.shellCmdOutput)
+
 	err = i.Add(":help")
 	assert.NoError(t, err)
 	assert.Equal(t, helpText, i.shellCmdOutput)
+
 	err = i.Add(`:imports`)
 	assert.NoError(t, err)
 	assert.Equal(t, i.imports.AsDump()+"\n", i.Eval())
+
 	err = i.Add("x+=2")
 	assert.NoError(t, err)
+
 	out := i.Eval()
-	fmt.Println(out)
 	assert.Empty(t, out)
 	assert.Equal(t, []string{"x+=2"}, i.code)
+
 	err = i.Add(":e x")
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"x+=2", wrapInPrint("x")}, i.code)
+
 	out = i.Eval()
 	assert.Equal(t, "<int> 4\n", out)
+
 	err = i.Add(":doc fmt.Println")
 	assert.NoError(t, err)
+
 	doc, err := goDoc("fmt.Println")
 	assert.NoError(t, err)
 	assert.Equal(t, string(doc)+"\n", i.Eval())
+
 	err = i.Add("func Name() string{}")
 	assert.NoError(t, err)
 	assert.Equal(t, "func Name() string{}", i.funcs["Name"])
+
 	err = i.Add(":funcs")
 	assert.NoError(t, err)
 	assert.Equal(t, "Name => func Name() string{}\n", i.Eval())
+
+	err = i.Add(":dump")
+	assert.NoError(t, err)
+	assert.Equal(t, i.dump()+"\n", i.Eval())
 }
