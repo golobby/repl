@@ -73,6 +73,6 @@ func main() {
 	fmt.Println(string(l))
 	fmt.Printf("GoLobby REPL v%s\n", version)
 
-	p := prompt.New(handler, completer, prompt.OptionPrefix("REPL> "))
+	p := prompt.New(handler, completer, prompt.OptionPrefix(">>> "))
 	p.Run()
 }
