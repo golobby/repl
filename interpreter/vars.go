@@ -21,6 +21,30 @@ func (v Var) String() string {
 }
 
 func (s *Interpreter) addVar(v Var) {
+	if strings.Contains(v.Name, ",") {
+		// multiple variable definition
+		splitted := strings.Split(v.Name, ",")
+		for _, sv := range splitted {
+			_, exists := s.vars[sv]
+			if exists {
+				delete(s.vars, sv)
+			}
+		}
+	} else {
+		for varName, value := range s.vars {
+			if strings.Contains(varName, ",") {
+				spl := strings.Split(varName, ",")
+				for idx := range spl {
+					if spl[idx] == v.Name {
+						spl[idx] = "_"
+					}
+				}
+				delete(s.vars, varName)
+				s.vars[strings.Join(spl, ",")] = value
+			}
+		}
+	}
+
 	s.vars[strings.TrimSpace(v.Name)] = v
 }
 
@@ -41,6 +65,7 @@ func isVarDecl(code string) bool {
 	}
 	return false
 }
+
 func NewVar(code string) Var {
 	tokens, lits := tokenizerAndLiterizer(code)
 	for _, t := range tokens {
@@ -54,45 +79,47 @@ func NewVar(code string) Var {
 }
 
 func extractDataFromVarWithVar(tokens []token.Token, lits []string) Var {
-	var idents []string
+	var names []string
+	var values []string
 	for idx, tok := range tokens {
-		if tok == token.VAR {
-			continue
-		}
 		if tok == token.ASSIGN {
-			continue
+			for i := 0; i < idx; i++ {
+				if tokens[i] == token.VAR {
+					continue
+				}
+				names = append(names, lits[i])
+			}
+			for i := idx + 1; i < len(tokens)-1; i++ {
+				if lits[i] == "" {
+					values = append(values, tokens[i].String())
+				} else {
+					values = append(values, lits[i])
+				}
+			}
 		}
-		if lits[idx] == " " || lits[idx] == "\n" || lits[idx] == "" {
-			continue
-		}
-		idents = append(idents, lits[idx])
 	}
 
-	if len(idents) == 2 {
-		return Var{
-			Name: idents[0], Value: idents[1],
-		}
-	} else if len(idents) == 3 {
-		return Var{
-			idents[0], idents[1], idents[2],
-		}
-	}
-	return Var{}
+	return Var{Name: strings.Join(names, ""), Value: strings.Join(values, "")}
 }
 func extractDataFromVarWithDefine(tokens []token.Token, lits []string) Var {
-	var idents []string
-	var valueIdx int
+	var names []string
+	var values []string
 	for idx, tok := range tokens {
-		if tok == token.IDENT {
-			idents = append(idents, lits[idx])
-			continue
-		} else if tok == token.DEFINE {
-			continue
+		if tok == token.DEFINE {
+			for i := 0; i < idx; i++ {
+				if tokens[i] == token.IDENT {
+					names = append(names, lits[i])
+				}
+			}
+			for i := idx + 1; i < len(tokens)-1; i++ {
+				if tokens[i] == token.IDENT || tokens[i] == token.STRING {
+					values = append(values, lits[i])
+					continue
+				}
+				values = append(values, tokens[i].String())
+			}
+			break
 		}
-		if lits[idx] == " " || lits[idx] == "\n" {
-			continue
-		}
-		valueIdx = idx
 	}
-	return Var{Name: idents[0], Value: lits[valueIdx]}
+	return Var{Name: strings.Join(names, ", "), Value: strings.Join(values, "")}
 }

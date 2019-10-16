@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"fmt"
 	"go/scanner"
 	"go/token"
 )
@@ -26,15 +27,21 @@ func createScannerFor(code string) scanner.Scanner {
 }
 func tokenizerAndLiterizer(code string) ([]token.Token, []string) {
 	s := createScannerFor(code)
-	tokens := []token.Token{}
-	lits := []string{}
+	var tokens []token.Token
+	var lits []string
 	for {
-		_, tok, lit := s.Scan()
+		pos, tok, lit := s.Scan()
 		if tok == token.EOF {
 			break
 		}
 		tokens = append(tokens, tok)
-		lits = append(lits, lit)
+		if tok == token.IDENT || tok == token.STRING {
+			lits = append(lits, lit)
+		} else if tok == token.INT || tok == token.FLOAT {
+			lits = append(lits, fmt.Sprint(code[pos-1:pos]))
+		} else {
+			lits = append(lits, tok.String())
+		}
 	}
 	return tokens, lits
 }

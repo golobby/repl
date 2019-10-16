@@ -1,6 +1,9 @@
 package interpreter
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 type REPLCmd uint8
 
@@ -30,7 +33,7 @@ func (s *Interpreter) handleShellCommands(code string) error {
 	case REPLCmdDoc:
 		output, err := goDoc(data)
 		if err != nil {
-			return err
+			return errors.New(string(output) + err.Error())
 		}
 		s.shellCmdOutput = string(output)
 		return nil

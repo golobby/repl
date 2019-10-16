@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"errors"
 	"fmt"
 	p "go/parser"
 	"go/token"
@@ -127,9 +128,13 @@ func (s *Interpreter) Add(code string) error {
 	if s.continueMode {
 		return nil
 	}
+	if typ == Shell {
+		return nil
+	}
 	if err := checkIfHasParsingError(s.String()); err != nil {
+		fmt.Println(s.String())
 		s.removeLastCode()
-		return err
+		return errors.New(err.Error() + "\n")
 	}
 	return nil
 }
