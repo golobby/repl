@@ -8,16 +8,15 @@ import (
 
 type Var struct {
 	Name  string
-	Type  string
 	Value string
 }
 type Vars map[string]Var
 
 func (v Var) String() string {
 	if v.Value != "" {
-		return fmt.Sprintf("%s %s = %s", v.Name, v.Type, v.Value)
+		return fmt.Sprintf("%s = %s", v.Name, v.Value)
 	}
-	return fmt.Sprintf("%s %s", v.Name, v.Type)
+	return fmt.Sprintf("%s", v.Name)
 }
 
 func (s *Interpreter) addVar(v Var) {
@@ -33,14 +32,14 @@ func (s *Interpreter) addVar(v Var) {
 	} else {
 		for varName, value := range s.vars {
 			if strings.Contains(varName, ",") {
-				spl := strings.Split(varName, ",")
-				for idx := range spl {
-					if spl[idx] == v.Name {
-						spl[idx] = "_"
+				varNameSplitted := strings.Split(varName, ",")
+				for idx := range varNameSplitted {
+					if varNameSplitted[idx] == v.Name {
+						varNameSplitted[idx] = "_"
 					}
 				}
 				delete(s.vars, varName)
-				s.vars[strings.Join(spl, ",")] = value
+				s.vars[strings.Join(varNameSplitted, ",")] = value
 			}
 		}
 	}
@@ -72,34 +71,26 @@ func NewVar(code string) Var {
 		if t == token.DEFINE {
 			return extractDataFromVarWithDefine(tokens, lits)
 		} else if t == token.VAR {
-			return extractDataFromVarWithVar(tokens, lits)
+			return extractDataFromVarWithVar(code)
 		}
 	}
 	return Var{}
 }
 
-func extractDataFromVarWithVar(tokens []token.Token, lits []string) Var {
-	var names []string
-	var values []string
-	for idx, tok := range tokens {
-		if tok == token.ASSIGN {
-			for i := 0; i < idx; i++ {
-				if tokens[i] == token.VAR {
-					continue
-				}
-				names = append(names, lits[i])
-			}
-			for i := idx + 1; i < len(tokens)-1; i++ {
-				if lits[i] == "" {
-					values = append(values, tokens[i].String())
-				} else {
-					values = append(values, lits[i])
-				}
-			}
-		}
+func extractDataFromVarWithVar(code string) Var {
+	var names string
+	var values string
+	if strings.Contains(code, "=") {
+		names = strings.Split(code, "=")[0]
+		names = names[3:]
+		names = strings.TrimSpace(names)
+		values = strings.Split(code, "=")[1]
+		values = strings.TrimSpace(values)
+		return Var{Name: names, Value: values}
+	} else {
+		return Var{Name: code[strings.Index(code, "var")+len("var"):]}
 	}
 
-	return Var{Name: strings.Join(names, ""), Value: strings.Join(values, "")}
 }
 func extractDataFromVarWithDefine(tokens []token.Token, lits []string) Var {
 	var names []string
@@ -112,7 +103,7 @@ func extractDataFromVarWithDefine(tokens []token.Token, lits []string) Var {
 				}
 			}
 			for i := idx + 1; i < len(tokens)-1; i++ {
-				if tokens[i] == token.IDENT || tokens[i] == token.STRING {
+				if tokens[i] == token.IDENT || tokens[i] == token.STRING || tokens[i] == token.INT || tokens[i] == token.FLOAT {
 					values = append(values, lits[i])
 					continue
 				}

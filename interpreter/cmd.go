@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"errors"
+	"os"
 	"strings"
 )
 
@@ -18,6 +19,7 @@ const (
 	REPLCmdImports
 	REPLCmdTypes
 	REPLCmdFuncs
+	REPLCmdExit
 )
 
 func isShellCommand(code string) bool {
@@ -63,6 +65,8 @@ func (s *Interpreter) handleShellCommands(code string) error {
 	case REPLCmdTypes:
 		s.shellCmdOutput = s.typesForSource()
 		return nil
+	case REPLCmdExit:
+		os.Exit(0)
 	default:
 		return nil
 	}
@@ -93,6 +97,8 @@ func ParseCmd(code string) (REPLCmd, string) {
 		return REPLCmdImports, ""
 	} else if isFuncs(code) {
 		return REPLCmdFuncs, ""
+	} else if isExit(code) {
+		return REPLCmdExit, ""
 	}
 	return 0, ""
 }
@@ -161,4 +167,11 @@ func isImports(code string) bool {
 		return false
 	}
 	return code[:8] == ":imports"
+}
+
+func isExit(code string) bool {
+	if len(code) < len(":exit") {
+		return false
+	}
+	return code[:5] == ":exit"
 }

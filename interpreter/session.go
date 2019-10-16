@@ -116,6 +116,10 @@ func (s *Interpreter) addCode(t Type, code string) error {
 }
 
 func (s *Interpreter) Add(code string) error {
+	if code == "exit" {
+		fmt.Println("Bye ...")
+		os.Exit(0)
+	}
 	s.removeTmpCodes()
 	typ, err := Parse(code)
 	if err != nil {

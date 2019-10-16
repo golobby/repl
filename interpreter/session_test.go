@@ -120,7 +120,7 @@ func Test_Integration(t *testing.T) {
 	i, err := NewSession(wd)
 	err = i.Add("var x =2")
 	assert.NoError(t, err)
-	assert.Equal(t, Var{"x", "", "2"}, i.vars["x"])
+	assert.Equal(t, Var{"x", "2"}, i.vars["x"])
 
 	err = i.Add("type user struct{")
 	assert.NoError(t, err)
@@ -137,7 +137,7 @@ func Test_Integration(t *testing.T) {
 
 	err = i.Add(`import "fmt"`)
 	assert.NoError(t, err)
-	assert.Equal(t, ImportDatas{{`"fmt"`, ""}}, i.imports)
+	assert.Equal(t, ImportDatas{{`"fmt"`}}, i.imports)
 
 	err = i.Add(`import (`)
 	assert.NoError(t, err)
@@ -154,7 +154,7 @@ func Test_Integration(t *testing.T) {
 	err = i.Add(")")
 	assert.NoError(t, err)
 	assert.False(t, i.continueMode)
-	assert.Equal(t, ImportDatas{{`"fmt"`, ""}, {`"os"`, ""}, {`"exec"`, ""}}, i.imports)
+	assert.Equal(t, ImportDatas{{`"fmt"`}, {`"os"`}, {`"exec"`}}, i.imports)
 
 	err = i.Add(":vars")
 	assert.NoError(t, err)
