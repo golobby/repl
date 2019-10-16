@@ -68,7 +68,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	err = currentInterpreter.Add(":e 1")
+	if err != nil {
+		panic(err)
+	}
 	l, _ := base64.StdEncoding.DecodeString(logo)
 	fmt.Println(string(l))
 	fmt.Printf("GoLobby REPL v%s\n", version)
