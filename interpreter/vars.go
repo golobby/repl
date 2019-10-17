@@ -8,6 +8,7 @@ import (
 
 type Var struct {
 	Name  string
+	Type  string
 	Value string
 }
 type Vars map[string]Var
@@ -78,18 +79,33 @@ func NewVar(code string) Var {
 }
 
 func extractDataFromVarWithVar(code string) Var {
+	var leftSide string
+	var rightSide string
+	var types string
 	var names string
-	var values string
-	if strings.Contains(code, "=") {
-		names = strings.Split(code, "=")[0]
-		names = names[3:]
-		names = strings.TrimSpace(names)
-		values = strings.Split(code, "=")[1]
-		values = strings.TrimSpace(values)
-		return Var{Name: names, Value: values}
-	} else {
-		return Var{Name: code[strings.Index(code, "var")+len("var"):]}
+	var v Var
+	leftSide = strings.Split(code, "=")[0]
+	leftSide = leftSide[3:] // without var
+	lefTokens, leftLits := tokenizerAndLiterizer(leftSide)
+	for idx, t := range lefTokens {
+		if idx-1 > 0 && lefTokens[idx-1] == token.IDENT && t == token.IDENT {
+			types += leftLits[idx]
+		} else {
+			if t == token.SEMICOLON {
+				continue
+			}
+			names += leftLits[idx]
+		}
 	}
+	leftSide = strings.TrimSpace(leftSide)
+	v.Name = names
+	v.Type = types
+	if strings.Contains(code, "=") {
+		rightSide = strings.Split(code, "=")[1]
+		rightSide = strings.TrimSpace(rightSide)
+		v.Value = rightSide
+	}
+	return v
 
 }
 func extractDataFromVarWithDefine(tokens []token.Token, lits []string) Var {

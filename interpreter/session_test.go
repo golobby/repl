@@ -120,7 +120,7 @@ func Test_Integration(t *testing.T) {
 	i, err := NewSession(wd)
 	err = i.Add("var x =2")
 	assert.NoError(t, err)
-	assert.Equal(t, Var{"x", "2"}, i.vars["x"])
+	assert.Equal(t, Var{"x", "", "2"}, i.vars["x"])
 
 	err = i.Add("type user struct{")
 	assert.NoError(t, err)
