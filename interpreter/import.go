@@ -7,7 +7,8 @@ import (
 )
 
 type ImportData struct {
-	Path string
+	Path  string
+	Alias string
 }
 type ImportDatas []ImportData
 
@@ -44,12 +45,27 @@ func isImport(im string) bool {
 }
 
 func ExtractImportData(im string) []ImportData {
+	tokens, lits := tokenizerAndLiterizer(im)
 	var imports []ImportData
-	importLines := strings.Split(im, "\n")
-	for _, i := range importLines {
-		if strings.Contains(i, "import") {
-			path := strings.TrimSpace(i[strings.Index(im, "import")+len("import"):])
-			imports = append(imports, ImportData{Path: path})
+	var currentImport ImportData
+	for idx, tok := range tokens {
+		if tok == token.EOF {
+			break
+		}
+		if tok == token.IMPORT || tok == token.LPAREN || tok == token.RPAREN {
+			continue
+		}
+		if lits[idx] == "\n" || tok == token.SEMICOLON {
+			if currentImport.Path != "" {
+				imports = append(imports, currentImport)
+			}
+			currentImport = ImportData{}
+		}
+		if tok == token.IDENT {
+			currentImport.Alias = lits[idx]
+		}
+		if tok == token.STRING {
+			currentImport.Path = lits[idx]
 		}
 	}
 	return imports

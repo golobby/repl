@@ -136,7 +136,6 @@ func (s *Interpreter) Add(code string) error {
 		return nil
 	}
 	if err := checkIfHasParsingError(s.String()); err != nil {
-		fmt.Println(s.String())
 		s.removeLastCode()
 		return errors.New(err.Error() + "\n")
 	}
