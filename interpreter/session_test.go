@@ -232,5 +232,6 @@ func Test_Integration(t *testing.T) {
 
 	err = i.Add(":dump")
 	assert.NoError(t, err)
-	assert.Equal(t, i.dump()+"\n", i.Eval())
+	exp := i.shellCmdOutput
+	assert.Equal(t, exp+"\n", i.Eval())
 }
