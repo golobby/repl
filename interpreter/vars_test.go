@@ -12,6 +12,10 @@ func Test_NewVar(t *testing.T) {
 	}, NewVar(`var x = 2`))
 
 	assert.Equal(t, Var{
+		"x", "int", "2",
+	}, NewVar(`var x int = 2`))
+
+	assert.Equal(t, Var{
 		"x,y", "int", "",
 	}, NewVar(`var x,y int`))
 

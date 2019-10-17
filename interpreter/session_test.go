@@ -3,6 +3,7 @@ package interpreter
 import (
 	"io/ioutil"
 	"os"
+	"reflect"
 	"testing"
 
 	"bou.ke/monkey"
@@ -118,9 +119,23 @@ func Test_Integration(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 	i, err := NewSession(wd)
+	assert.NoError(t, err)
 	err = i.Add("var x =2")
 	assert.NoError(t, err)
 	assert.Equal(t, Var{"x", "", "2"}, i.vars["x"])
+
+	err = i.Add("x := 3")
+	assert.NoError(t, err)
+	assert.Equal(t, Var{"x", "", "3"}, i.vars["x"])
+
+	err = i.Add("var z,y int= 3,4")
+	assert.NoError(t, err)
+	assert.Equal(t, Var{"z,y", "int", "3,4"}, i.vars["z,y"])
+
+	err = i.Add("var z=2")
+	assert.NoError(t, err)
+	assert.Equal(t, Var{"z", "", "2"}, i.vars["z"])
+	assert.Equal(t, Var{"_,y", "int", "3,4"}, i.vars["_,y"])
 
 	err = i.Add("type user struct{")
 	assert.NoError(t, err)
@@ -158,7 +173,17 @@ func Test_Integration(t *testing.T) {
 
 	err = i.Add(":vars")
 	assert.NoError(t, err)
-	assert.Equal(t, i.vars.String(), i.shellCmdOutput)
+	assert.True(t, reflect.DeepEqual(i.vars, Vars{
+		"_,y": Var{
+			"_,y", "int", "3,4",
+		},
+		"z": Var{
+			"z", "", "2",
+		},
+		"x": Var{
+			"x", "", "3",
+		},
+	}))
 
 	err = i.Add(`:types`)
 	assert.NoError(t, err)
@@ -171,6 +196,10 @@ func Test_Integration(t *testing.T) {
 	err = i.Add(`:imports`)
 	assert.NoError(t, err)
 	assert.Equal(t, i.imports.AsDump()+"\n", i.Eval())
+
+	err = i.Add("var x int = 2")
+	assert.NoError(t, err)
+	assert.Equal(t, Var{"x", "int", "2"}, i.vars["x"])
 
 	err = i.Add("x+=2")
 	assert.NoError(t, err)

@@ -33,13 +33,15 @@ func (s *Interpreter) addVar(v Var) {
 	} else {
 		for varName, value := range s.vars {
 			if strings.Contains(varName, ",") {
-				varNameSplitted := strings.Split(varName, ",")
+				varNameWithoutSpace := strings.TrimSpace(varName)
+				varNameSplitted := strings.Split(varNameWithoutSpace, ",")
 				for idx := range varNameSplitted {
 					if varNameSplitted[idx] == v.Name {
 						varNameSplitted[idx] = "_"
 					}
 				}
 				delete(s.vars, varName)
+				value.Name = strings.Join(varNameSplitted, ",")
 				s.vars[strings.Join(varNameSplitted, ",")] = value
 			}
 		}
@@ -88,7 +90,7 @@ func extractDataFromVarWithVar(code string) Var {
 	leftSide = leftSide[3:] // without var
 	lefTokens, leftLits := tokenizerAndLiterizer(leftSide)
 	for idx, t := range lefTokens {
-		if idx-1 > 0 && lefTokens[idx-1] == token.IDENT && t == token.IDENT {
+		if idx-1 >= 0 && lefTokens[idx-1] == token.IDENT && t == token.IDENT {
 			types += leftLits[idx]
 		} else {
 			if t == token.SEMICOLON {

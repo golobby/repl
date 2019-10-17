@@ -18,7 +18,7 @@ go install github.com/golobby/gshell
 ```
 ####
 ## Why
-gshell stands for Read-Eval-Print-Loop. In scripting languages like PHP or Python there is an environment called gshell, which is 
+gshell is a REPL, Read-Eval-Print-Loop. In scripting languages like PHP or Python there is an environment called gshell, which is 
 basically a command line interface that is connected to the language interpreter and it would show instantly the result of 
 user input. In Golang we don't have this feature by default but it does'nt mean that we cannot benefit the power that gshell gives
 us.
