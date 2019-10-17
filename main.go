@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/golobby/repl/interpreter"
+	"github.com/golobby/gshell/interpreter"
 
 	"github.com/c-bata/go-prompt"
 )
