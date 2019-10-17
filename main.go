@@ -39,6 +39,7 @@ func handler(input string) {
 	err := currentInterpreter.Add(input)
 	if err != nil {
 		fmt.Print(err.Error())
+
 		return
 	}
 

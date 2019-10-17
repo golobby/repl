@@ -19,10 +19,17 @@ func Test_extractImportData(t *testing.T) {
 	}, ExtractImportData(`import "fmt"`))
 	assert.Equal(t, []ImportData{
 		{
+			Path:  `"fmt"`,
+			Alias: "f",
+		},
+	}, ExtractImportData(`import f "fmt"`))
+	assert.Equal(t, []ImportData{
+		{
 			Path: `"fmt"`,
 		},
 		{
 			Path: `"os"`,
 		},
 	}, ExtractImportData("import (\n\"fmt\"\n\"os\"\n)"))
+
 }

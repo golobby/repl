@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/golobby/repl.png?branch=master)](https://travis-ci.org/golobby/repl)
-[![Coverage State](https://coveralls.io/repos/github/golobby/repl/badge.png?branch=master)](https://coveralls.io/github/golobby/repl)
+[![Build Status](https://travis-ci.org/golobby/gshell.png?branch=master)](https://travis-ci.org/golobby/gshell)
+[![Coverage State](https://coveralls.io/repos/github/golobby/gshell/badge.png?branch=master)](https://coveralls.io/github/golobby/gshell)
 # gshell
 ## Getting Started
 
