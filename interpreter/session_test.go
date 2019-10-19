@@ -62,7 +62,7 @@ func Test_add_print(t *testing.T) {
 func Test_add_function_call(t *testing.T) {
 	s := &Interpreter{}
 	s.Add(`someFunc("salam man be to yare ghadimi")`)
-	assert.Equal(t, s.code, []string{`someFunc("salam man be to yare ghadimi")`})
+	assert.Equal(t, s.code, []string{"fmt.Printf(\"<%T> %+v\\n\", someFunc(\"salam man be to yare ghadimi\"), someFunc(\"salam man be to yare ghadimi\"))"})
 }
 func Test_add_continue_mode(t *testing.T) {
 	s := &Interpreter{}
