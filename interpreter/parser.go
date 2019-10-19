@@ -18,6 +18,7 @@ const (
 	Print
 	Unknown
 	Expr
+	Stmt
 	Empty
 )
 

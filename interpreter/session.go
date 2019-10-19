@@ -14,17 +14,18 @@ import (
 )
 
 type Interpreter struct {
-	shellCmdOutput string
-	imports        ImportDatas
-	types          map[string]string
-	funcs          map[string]string
-	vars           Vars
-	tmpCodes       []int
-	code           []string
-	sessionDir     string
-	Writer         io.Writer
-	continueMode   bool
-	indents        int
+	shellCmdOutput   string
+	imports          ImportDatas
+	types            map[string]string
+	funcs            map[string]string
+	vars             Vars
+	tmpCodes         []int
+	code             []string
+	tmpIfusedAsValue string
+	sessionDir       string
+	Writer           io.Writer
+	continueMode     bool
+	indents          int
 }
 
 const helpText = `
@@ -110,6 +111,7 @@ func (s *Interpreter) addCode(t Type, code string) error {
 	case Empty:
 		return nil
 	case Expr:
+		s.tmpIfusedAsValue = code
 		return s.addCode(Print, wrapInPrint(code))
 	default:
 		s.code = append(s.code, code)
@@ -144,6 +146,7 @@ func (s *Interpreter) Add(code string) error {
 	return nil
 }
 
+// used as value
 func createTmpDir(workingDirectory string) (string, error) {
 	sessionDir := workingDirectory + "/.gshell/sessions/" + fmt.Sprint(time.Now().Nanosecond())
 	err := os.MkdirAll(sessionDir, 500)
@@ -232,6 +235,9 @@ func checkIfHasParsingError(code string) error {
 	}
 	return nil
 }
+func checkIfErrIsUsedAsValue(err string) bool {
+	return strings.Contains(err, "used as value")
+}
 
 func (s *Interpreter) Eval() string {
 	if s.shellCmdOutput != "" {
@@ -267,6 +273,12 @@ func (s *Interpreter) Eval() string {
 	if err != nil {
 		if checkIfErrIsNotDecl(string(out)) {
 			return fmt.Sprintf("%s %s\n", string(out), err.Error())
+		} else if checkIfErrIsUsedAsValue(string(out)) {
+			s.removeLastCode()
+			if err = s.addCode(Unknown, s.tmpIfusedAsValue); err != nil {
+				return err.Error()
+			}
+			return s.Eval()
 		} else {
 			s.removeLastCode()
 			return fmt.Sprintf("%s %s\n", string(out), err.Error())

@@ -50,7 +50,6 @@ func handler(input string) {
 }
 
 func main() {
-
 	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
