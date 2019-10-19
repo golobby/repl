@@ -147,7 +147,7 @@ func (s *Interpreter) Eval(code string) (string, error) {
 
 // used as value
 func createTmpDir(workingDirectory string) (string, error) {
-	sessionDir := workingDirectory + "/.gshell/sessions/" + fmt.Sprint(time.Now().Nanosecond())
+	sessionDir := workingDirectory + "/.repl/sessions/" + fmt.Sprint(time.Now().Nanosecond())
 	err := os.MkdirAll(sessionDir, 500)
 	if err != nil {
 		return sessionDir, err

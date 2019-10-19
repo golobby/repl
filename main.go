@@ -66,6 +66,6 @@ func main() {
 	}
 	fmt.Printf("gshell v%s\n", version)
 
-	p := prompt.New(handler, completer, prompt.OptionPrefix("gshell> "))
+	p := prompt.New(handler, completer, prompt.OptionPrefix("repl> "))
 	p.Run()
 }
