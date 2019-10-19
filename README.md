@@ -60,7 +60,12 @@ gshell> var x = 5
 ```
 
 ### Instant Expression Evaluation
-gshell can easily evaluate an expression for you with a simple built-in command.
+gshell can easily evaluate any valid Go expression.
+```go
+gshell> 2 // <int> 2
+gshell> 2*3*(2+1) // <int> 18
+gshell> "Hello World" // <string> "Hello World"
+```
 
 ### Automated Imports
 gshell uses the power of goimports so it can almost identify all packages you use and automatically import them for you.
