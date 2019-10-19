@@ -185,17 +185,17 @@ func Test_Integration(t *testing.T) {
 		},
 	}))
 
-	_, err = i.Eval(`:types`)
+	out, err := i.Eval(`:types`)
 	assert.NoError(t, err)
-	assert.Equal(t, i.typesForSource(), i.shellCmdOutput)
+	assert.Equal(t, i.typesForSource()+"\n", out)
 
-	_, err = i.Eval(":help")
+	out, err = i.Eval(":help")
 	assert.NoError(t, err)
-	assert.Equal(t, helpText, i.shellCmdOutput)
+	assert.Equal(t, helpText+"\n", out)
 
-	_, err = i.Eval(`:imports`)
+	out, err = i.Eval(`:imports`)
 	assert.NoError(t, err)
-	assert.Equal(t, i.imports.AsDump()+"\n", i.eval())
+	assert.Equal(t, i.imports.AsDump()+"\n", out)
 
 	_, err = i.Eval("var x int = 2")
 	assert.NoError(t, err)
@@ -204,7 +204,7 @@ func Test_Integration(t *testing.T) {
 	_, err = i.Eval("x+=2")
 	assert.NoError(t, err)
 
-	out := i.eval()
+	out = i.eval()
 	assert.Empty(t, out)
 	assert.Equal(t, []string{"x+=2"}, i.code)
 
@@ -215,23 +215,21 @@ func Test_Integration(t *testing.T) {
 	out = i.eval()
 	assert.Equal(t, "<int> 4\n", out)
 
-	_, err = i.Eval(":doc fmt.Println")
+	out, err = i.Eval(":doc fmt.Println")
 	assert.NoError(t, err)
 
 	doc, err := goDoc("fmt.Println")
 	assert.NoError(t, err)
-	assert.Equal(t, string(doc)+"\n", i.eval())
+	assert.Equal(t, string(doc)+"\n", out)
 
 	_, err = i.Eval("func Name() string{}")
 	assert.NoError(t, err)
 	assert.Equal(t, "func Name() string{}", i.funcs["Name"])
 
-	_, err = i.Eval(":funcs")
+	out, err = i.Eval(":funcs")
 	assert.NoError(t, err)
-	assert.Equal(t, "Name => func Name() string{}\n", i.eval())
+	assert.Equal(t, "Name => func Name() string{}\n", out)
 
-	_, err = i.Eval(":dump")
+	out, err = i.Eval(":dump")
 	assert.NoError(t, err)
-	exp := i.shellCmdOutput
-	assert.Equal(t, exp+"\n", i.eval())
 }
