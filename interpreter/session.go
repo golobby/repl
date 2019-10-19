@@ -109,6 +109,8 @@ func (s *Interpreter) addCode(t Type, code string) error {
 		return nil
 	case Empty:
 		return nil
+	case Expr:
+		return s.addCode(Print, wrapInPrint(code))
 	default:
 		s.code = append(s.code, code)
 		return nil

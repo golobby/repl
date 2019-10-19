@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"go/parser"
 	"go/scanner"
 	"go/token"
 )
@@ -16,6 +17,7 @@ const (
 	Shell
 	Print
 	Unknown
+	Expr
 	Empty
 )
 
@@ -61,9 +63,19 @@ func Parse(code string) (Type, error) {
 		return Print, nil
 	} else if isVarDecl(code) {
 		return VarDecl, nil
+	} else if isExpr(code) {
+		return Expr, nil
 	} else {
 		return Unknown, nil
 	}
+}
+
+func isExpr(code string) bool {
+	_, err := parser.ParseExpr(code)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func ShouldContinue(code string) (int, bool) {
