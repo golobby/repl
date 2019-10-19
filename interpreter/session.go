@@ -68,7 +68,7 @@ func (s *Interpreter) appendToLastCode(code string) {
 	return
 }
 
-func (s *Interpreter) addCode(t Type, code string) error {
+func (s *Interpreter) addCode(t Type, code string) (string, error) {
 	if s.continueMode {
 		s.appendToLastCode(code)
 		indents, shouldContinue := ShouldContinue(s.code[len(s.code)-1])
@@ -77,49 +77,48 @@ func (s *Interpreter) addCode(t Type, code string) error {
 			s.continueMode = false
 			code = s.code[len(s.code)-1]
 			s.code = s.code[:len(s.code)-1]
-			s.Add(code)
-			return nil
+			return s.Eval(code)
 		}
-		return nil
+		return "", nil
 	}
 	indents, shouldContinue := ShouldContinue(code)
 	s.indents = indents
 	if shouldContinue {
 		s.continueMode = true
 		s.code = append(s.code, code)
-		return nil
+		return "", nil
 	}
 	switch t {
 	case Shell:
 		return s.handleShellCommands(code)
 	case Import:
 		s.addImport(ExtractImportData(code))
-		return nil
+		return "", nil
 	case Print:
 		s.code = append(s.code, code)
 		s.tmpCodes = append(s.tmpCodes, len(s.code)-1)
-		return nil
+		return "", nil
 	case TypeDecl:
 		s.addType(ExtractTypeName(code), code)
-		return nil
+		return "", nil
 	case FuncDecl:
 		s.addFunc(ExtractFuncName(code), code)
-		return nil
+		return "", nil
 	case VarDecl:
 		s.addVar(NewVar(code))
-		return nil
+		return "", nil
 	case Empty:
-		return nil
+		return "", nil
 	case Expr:
 		s.tmpIfusedAsValue = code
 		return s.addCode(Print, wrapInPrint(code))
 	default:
 		s.code = append(s.code, code)
-		return nil
+		return "", nil
 	}
 }
 
-func (s *Interpreter) Add(code string) error {
+func (s *Interpreter) Eval(code string) (string, error) {
 	if code == "exit" {
 		fmt.Println("Bye ...")
 		os.Exit(0)
@@ -127,23 +126,23 @@ func (s *Interpreter) Add(code string) error {
 	s.removeTmpCodes()
 	typ, err := Parse(code)
 	if err != nil {
-		return err
+		return "", err
 	}
-	err = s.addCode(typ, code)
+	_, err = s.addCode(typ, code)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if s.continueMode {
-		return nil
+		return "", nil
 	}
 	if typ == Shell {
-		return nil
+		return "", nil
 	}
 	if err := checkIfHasParsingError(s.String()); err != nil {
 		s.removeLastCode()
-		return errors.New(err.Error() + "\n")
+		return "", errors.New(err.Error() + "\n")
 	}
-	return nil
+	return s.eval(), nil
 }
 
 // used as value
@@ -239,7 +238,7 @@ func checkIfErrIsUsedAsValue(err string) bool {
 	return strings.Contains(err, "used as value")
 }
 
-func (s *Interpreter) Eval() string {
+func (s *Interpreter) eval() string {
 	if s.shellCmdOutput != "" {
 		output := s.shellCmdOutput
 		s.shellCmdOutput = ""
@@ -275,10 +274,10 @@ func (s *Interpreter) Eval() string {
 			return fmt.Sprintf("%s %s\n", string(out), err.Error())
 		} else if checkIfErrIsUsedAsValue(string(out)) {
 			s.removeLastCode()
-			if err = s.addCode(Unknown, s.tmpIfusedAsValue); err != nil {
+			if _, err = s.addCode(Unknown, s.tmpIfusedAsValue); err != nil {
 				return err.Error()
 			}
-			return s.Eval()
+			return s.eval()
 		} else {
 			s.removeLastCode()
 			return fmt.Sprintf("%s %s\n", string(out), err.Error())

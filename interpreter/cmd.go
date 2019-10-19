@@ -29,48 +29,48 @@ func isShellCommand(code string) bool {
 	return code[0] == ':'
 }
 
-func (s *Interpreter) handleShellCommands(code string) error {
+func (s *Interpreter) handleShellCommands(code string) (string, error) {
 	typ, data := ParseCmd(code)
 	switch typ {
 	case REPLCmdDoc:
 		output, err := goDoc(data)
 		if err != nil {
-			return errors.New(string(output) + err.Error())
+			return "", errors.New(string(output) + err.Error())
 		}
 		s.shellCmdOutput = string(output)
-		return nil
+		return "", nil
 	case REPLCmdHelp:
 		s.shellCmdOutput = helpText
-		return nil
+		return "", nil
 	case REPLCmdTypeVal:
-		return s.Add(wrapInPrint(data))
+		return s.Eval(wrapInPrint(data))
 	case REPLCmdPop:
 		s.code = s.code[:len(s.code)-1]
-		return nil
+		return "", nil
 	case REPLCmdDump:
 		s.shellCmdOutput = s.dump()
-		return nil
+		return "", nil
 	case REPLCmdFile:
 		s.shellCmdOutput = s.String()
-		return nil
+		return "", nil
 	case REPLCmdImports:
 		s.shellCmdOutput = s.imports.AsDump()
-		return nil
+		return "", nil
 	case REPLCmdVars:
 		s.shellCmdOutput = s.vars.String()
-		return nil
+		return "", nil
 	case REPLCmdFuncs:
 		s.shellCmdOutput = s.funcsAsString()
-		return nil
+		return "", nil
 	case REPLCmdTypes:
 		s.shellCmdOutput = s.typesForSource()
-		return nil
+		return "", nil
 	case REPLCmdExit:
 		os.Exit(0)
 	default:
-		return nil
+		return "", nil
 	}
-	return nil
+	return "", nil
 }
 
 func ParseCmd(code string) (REPLCmd, string) {

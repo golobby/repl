@@ -36,14 +36,12 @@ func handler(input string) {
 	if DEBUG {
 		start = time.Now()
 	}
-	err := currentInterpreter.Add(input)
+	out, err := currentInterpreter.Eval(input)
 	if err != nil {
 		fmt.Print(err.Error())
-
 		return
 	}
-
-	fmt.Print(currentInterpreter.Eval())
+	fmt.Print(out)
 	if DEBUG {
 		fmt.Printf(":::::: D => %v\n", time.Since(start))
 	}
@@ -62,7 +60,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = currentInterpreter.Add(":e 1")
+	_, err = currentInterpreter.Eval(":e 1")
 	if err != nil {
 		panic(err)
 	}
