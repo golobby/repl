@@ -133,14 +133,13 @@ func (s *Interpreter) Eval(code string) (string, error) {
 		return "", err
 	}
 	if s.continueMode {
-		return "", nil
+		return strings.Repeat("...", s.indents), nil
 	}
-	if typ == Shell {
-		return "", nil
-	}
-	if err := checkIfHasParsingError(s.String()); err != nil {
-		s.removeLastCode()
-		return "", errors.New(err.Error() + "\n")
+	if typ != Shell {
+		if err := checkIfHasParsingError(s.String()); err != nil {
+			s.removeLastCode()
+			return "", errors.New(err.Error() + "\n")
+		}
 	}
 	return s.eval(), nil
 }

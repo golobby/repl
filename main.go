@@ -18,7 +18,7 @@ var (
 )
 
 const (
-	version = "0.1.1a"
+	version = "0.1.2"
 )
 
 func completer(d prompt.Document) []prompt.Suggest {
@@ -64,7 +64,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("gshell v%s\n", version)
+	fmt.Printf("repl v%s\n", version)
 
 	p := prompt.New(handler, completer, prompt.OptionPrefix("repl> "))
 	p.Run()
